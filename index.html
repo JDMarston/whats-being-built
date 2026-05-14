@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>What’s Being Built – St. Petersburg</title>
+  <title>What's Being Built - St. Petersburg</title>
   <!-- Load Leaflet and plugin styles from jsDelivr -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-control-geocoder/dist/Control.Geocoder.css" />
@@ -44,13 +44,13 @@
   </style>
 </head>
 <body>
-  <header>What’s Being Built in St. Petersburg</header>
+  <header>What's Being Built in St. Petersburg</header>
   <div id="map"></div>
   <!-- Load Leaflet and plugins from jsDelivr -->
   <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
   <script>
-    // Initialize the map with default view centered on downtown St. Petersburg.
+    // Initialize the map with default view centered on downtown St. Petersburg.
     const map = L.map('map').setView([27.7718, -82.6400], 14);
     // Define base layers: standard OpenStreetMap and a satellite imagery layer from Esri.
     const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -84,9 +84,31 @@
       ]);
       map.fitBounds(poly.getBounds());
     }).addTo(map);
+    function completionDateForCutoff(value) {
+      if (!value) return null;
+      const text = String(value);
+      if (/^\d{4}$/.test(text)) {
+        return new Date(Number(text), 11, 31);
+      }
+      if (/^\d{4}-\d{2}$/.test(text)) {
+        const [year, month] = text.split('-').map(Number);
+        return new Date(year, month, 0);
+      }
+      const parsed = new Date(text);
+      return Number.isNaN(parsed.getTime()) ? null : parsed;
+    }
+
+    function shouldShowProject(project) {
+      const twoYearsAgo = new Date();
+      twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
+      const completionDate = completionDateForCutoff(project.completed_at || project.built);
+      if (!completionDate) return true;
+      return completionDate >= twoYearsAgo;
+    }
+
     // Function to plot projects on the map
     function plotProjects(projects) {
-      projects.forEach((p) => {
+      projects.filter(shouldShowProject).forEach((p) => {
         // Skip entries without coordinates
         if (!p.lat || !p.lng) return;
         const marker = L.marker([p.lat, p.lng]).addTo(map);
@@ -100,8 +122,17 @@
         if (p.built) {
           dateInfo += `<strong>Built:</strong> ${p.built}<br>`;
         }
+        if (p.completed_at) {
+          dateInfo += `<strong>Completed:</strong> ${p.completed_at}<br>`;
+        }
         if (p.expected_open && (!p.built || p.expected_open !== p.built)) {
           dateInfo += `<strong>Expected Opening:</strong> ${p.expected_open}<br>`;
+        }
+        if (p.address) {
+          dateInfo += `<strong>Address:</strong> ${p.address}<br>`;
+        }
+        if (p.last_verified) {
+          dateInfo += `<strong>Last verified:</strong> ${p.last_verified}<br>`;
         }
         const popupContent =
           `<strong>${p.name}</strong><br>` +
