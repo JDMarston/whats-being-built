@@ -2,88 +2,563 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>What's Being Built - St. Petersburg</title>
-  <!-- Load Leaflet and plugin styles from jsDelivr -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.css">
   <style>
+    :root {
+      color-scheme: dark;
+      --panel: rgba(13, 20, 24, 0.86);
+      --panel-strong: rgba(13, 20, 24, 0.96);
+      --text: #f5f7f8;
+      --muted: #b7c2c8;
+      --accent: #ffb000;
+      --accent-strong: #ff7a1a;
+      --line: rgba(255, 255, 255, 0.16);
+      --shadow: 0 14px 34px rgba(0, 0, 0, 0.28);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
     body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-    }
-    header {
-      padding: 10px;
-      background: #f2f2f2;
-      margin: 0;
-      font-size: 1.4em;
-    }
-    #map {
-      height: 600px;
       width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #0d1418;
     }
-    /* Style for the orientation arrow; the icon will be rotated via JS. */
-    .orientation-arrow {
-      width: 24px;
-      height: 24px;
-      background: #007bff;
-      clip-path: polygon(50% 0%, 100% 100%, 50% 75%, 0% 100%);
-      transform-origin: 50% 50%;
-      pointer-events: none;
+
+    body {
+      min-height: 100vh;
+      min-height: 100dvh;
     }
-    .leaflet-popup-content {
-      font-size: 14px;
-      line-height: 1.4;
+
+    .app-shell {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      width: 100%;
+      height: 100vh;
+      height: 100dvh;
     }
-    .leaflet-popup-content ul {
+
+    header {
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: max(12px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) 12px max(14px, env(safe-area-inset-left));
+      color: var(--text);
+      background: linear-gradient(90deg, rgba(8, 15, 18, 0.96), rgba(17, 29, 34, 0.92));
+      border-bottom: 1px solid var(--line);
+      box-shadow: var(--shadow);
+    }
+
+    .brand {
+      min-width: 0;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.05rem;
+      line-height: 1.15;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.2;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    select,
+    button {
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.1);
+      font: inherit;
+      cursor: pointer;
+    }
+
+    select {
+      max-width: 190px;
+      padding: 0 34px 0 11px;
+    }
+
+    button {
+      min-width: 44px;
+      padding: 0 12px;
+      font-weight: 700;
+    }
+
+    button.active {
+      color: #1c1400;
+      border-color: transparent;
+      background: var(--accent);
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+    }
+
+    .project-marker {
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border: 2px solid #ffffff;
+      border-radius: 50%;
+      background: var(--accent-strong);
+      box-shadow: 0 3px 14px rgba(0, 0, 0, 0.44);
+      transform: translateY(-2px);
+    }
+
+    .project-marker::after {
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+      background: #1f1300;
+      content: "";
+    }
+
+    .project-marker.status-proposed {
+      background: #4fb4ff;
+    }
+
+    .project-marker.status-recently-completed {
+      background: #42c47c;
+    }
+
+    .project-marker:hover,
+    .project-marker:focus-visible {
+      outline: 3px solid rgba(255, 176, 0, 0.35);
+      outline-offset: 3px;
+    }
+
+    .maplibregl-popup {
+      max-width: min(330px, calc(100vw - 28px)) !important;
+    }
+
+    .maplibregl-popup-content {
+      padding: 14px 15px 12px;
+      border-radius: 8px;
+      color: #172126;
+      font-size: 0.91rem;
+      line-height: 1.42;
+      box-shadow: var(--shadow);
+    }
+
+    .maplibregl-popup-content h2 {
+      margin: 0 26px 4px 0;
+      font-size: 1.02rem;
+      line-height: 1.18;
+    }
+
+    .maplibregl-popup-content p {
+      margin: 9px 0;
+    }
+
+    .popup-status {
+      display: inline-block;
+      margin-bottom: 8px;
+      color: #516169;
+      font-style: italic;
+    }
+
+    .popup-details {
+      display: grid;
+      gap: 4px;
+      margin: 8px 0;
+      color: #26343a;
+      font-size: 0.84rem;
+    }
+
+    .maplibregl-popup-content ul {
       padding-left: 18px;
+      margin: 6px 0 0;
+    }
+
+    .maplibregl-popup-content li {
       margin: 4px 0;
     }
-    .leaflet-popup-content li {
-      margin: 2px 0;
+
+    .maplibregl-popup-content a {
+      color: #005ea8;
+    }
+
+    .maplibregl-ctrl-top-right {
+      top: 76px;
+    }
+
+    .maplibregl-ctrl-group {
+      overflow: hidden;
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .maplibregl-ctrl button {
+      min-width: 0;
+      min-height: 0;
+    }
+
+    .locate-icon {
+      position: relative;
+      display: block;
+      width: 18px;
+      height: 18px;
+      margin: auto;
+      border: 2px solid #1f2c33;
+      border-radius: 50%;
+    }
+
+    .locate-icon::before,
+    .locate-icon::after {
+      position: absolute;
+      background: #1f2c33;
+      content: "";
+    }
+
+    .locate-icon::before {
+      top: 50%;
+      left: -5px;
+      width: 24px;
+      height: 2px;
+      transform: translateY(-50%);
+    }
+
+    .locate-icon::after {
+      top: -5px;
+      left: 50%;
+      width: 2px;
+      height: 24px;
+      transform: translateX(-50%);
+    }
+
+    .user-puck {
+      --heading: 0deg;
+      position: relative;
+      width: 23px;
+      height: 23px;
+      border: 3px solid #ffffff;
+      border-radius: 50%;
+      background: #1e8fff;
+      box-shadow: 0 0 0 8px rgba(30, 143, 255, 0.18), 0 4px 14px rgba(0, 0, 0, 0.34);
+    }
+
+    .user-puck::before {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      display: none;
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: conic-gradient(from -21deg, rgba(30, 143, 255, 0.38) 0deg 42deg, transparent 42deg 360deg);
+      transform: translate(-50%, -50%) rotate(var(--heading));
+      content: "";
+    }
+
+    .user-puck.has-heading::before {
+      display: block;
+    }
+
+    @media (max-width: 720px) {
+      header {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      h1 {
+        font-size: 1rem;
+      }
+
+      .toolbar {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr auto;
+      }
+
+      select,
+      button {
+        min-height: 44px;
+      }
+
+      select {
+        width: 100%;
+        max-width: none;
+      }
+
+      .maplibregl-ctrl-top-right {
+        top: 126px;
+      }
+
+      .maplibregl-ctrl button {
+        width: 44px;
+        height: 44px;
+      }
+
+      .project-marker {
+        width: 32px;
+        height: 32px;
+      }
     }
   </style>
 </head>
 <body>
-  <header>What's Being Built in St. Petersburg</header>
-  <div id="map"></div>
-  <!-- Load Leaflet and plugins from jsDelivr -->
-  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+  <div class="app-shell">
+    <header>
+      <div class="brand">
+        <h1>What's Being Built in St. Petersburg</h1>
+        <div class="meta">
+          <span id="projectCount">Loading projects</span>
+          <span id="imageryNote">Global satellite imagery</span>
+        </div>
+      </div>
+      <div class="toolbar">
+        <select id="imagerySelect" aria-label="Imagery layer">
+          <option value="global-satellite">Global satellite</option>
+          <option value="street-map">Street map</option>
+          <option value="pinellas-2025">Pinellas 2025 detail</option>
+          <option value="pinellas-2024">Pinellas 2024 detail</option>
+        </select>
+        <button id="pitchToggle" type="button" class="active" aria-pressed="true" title="Toggle 3D view">3D</button>
+      </div>
+    </header>
+    <div id="map"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
   <script>
-    // Initialize the map with default view centered on downtown St. Petersburg.
-    const map = L.map('map').setView([27.7718, -82.6400], 14);
-    // Define base layers: standard OpenStreetMap and a satellite imagery layer from Esri.
-    const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '© OpenStreetMap contributors'
-    });
-    const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-      maxZoom: 19,
-      attribution: 'Imagery © Esri'
-    });
-    // Add OSM layer by default.
-    osmLayer.addTo(map);
-    // Base layers object for the layer control.
-    const baseLayers = {
-      'Map': osmLayer,
-      'Satellite': satelliteLayer
+    const isMobile = window.matchMedia('(pointer: coarse), (max-width: 720px)').matches;
+    const mapCenter = [-82.6400, 27.7718];
+    const pinellasCoverage = {
+      west: -82.94,
+      south: 27.55,
+      east: -82.50,
+      north: 28.20,
+      minZoom: 10.5
     };
-    // Add layer control to switch between map and satellite.
-    L.control.layers(baseLayers).addTo(map);
-    // Geocoder control for searching addresses and places using Nominatim.
-    const geocoder = L.Control.geocoder({
-      defaultMarkGeocode: false,
-      geocoder: L.Control.Geocoder.nominatim({ serviceUrl: 'https://nominatim.openstreetmap.org/' })
-    }).on('markgeocode', function(e) {
-      const bbox = e.geocode.bbox;
-      const poly = L.polygon([
-        [bbox.getSouthEast().lat, bbox.getSouthEast().lng],
-        [bbox.getNorthEast().lat, bbox.getNorthEast().lng],
-        [bbox.getNorthWest().lat, bbox.getNorthWest().lng],
-        [bbox.getSouthWest().lat, bbox.getSouthWest().lng]
-      ]);
-      map.fitBounds(poly.getBounds());
-    }).addTo(map);
+    const imageryNotes = {
+      'global-satellite': 'Global satellite imagery',
+      'street-map': 'Global street map',
+      'pinellas-2025': 'Pinellas 2025 detail over global imagery',
+      'pinellas-2024': 'Pinellas 2024 detail over global imagery'
+    };
+    let selectedImageryMode = 'global-satellite';
+
+    const map = new maplibregl.Map({
+      container: 'map',
+      center: mapCenter,
+      zoom: isMobile ? 13.4 : 14.2,
+      pitch: isMobile ? 48 : 55,
+      bearing: isMobile ? -12 : -18,
+      maxZoom: 20,
+      hash: true,
+      attributionControl: false,
+      style: {
+        version: 8,
+        sources: {
+          'esri-world': {
+            type: 'raster',
+            tiles: [
+              'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+            ],
+            tileSize: 256,
+            attribution: 'Imagery &copy; Esri'
+          },
+          'osm-streets': {
+            type: 'raster',
+            tiles: [
+              'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
+              'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
+              'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png'
+            ],
+            tileSize: 256,
+            attribution: '&copy; OpenStreetMap contributors'
+          },
+          'pinellas-2025': {
+            type: 'raster',
+            tiles: [
+              'https://egis.pinellas.gov/gis/rest/services/Aerials2025/ImageServer/tile/{z}/{y}/{x}'
+            ],
+            tileSize: 256,
+            attribution: 'Pinellas County Enterprise GIS'
+          },
+          'pinellas-2024': {
+            type: 'raster',
+            tiles: [
+              'https://egis.pinellas.gov/gis/rest/services/Aerials/Aerials2024/ImageServer/exportImage?bbox={bbox-epsg-3857}&bboxSR=3857&imageSR=3857&size=256%2C256&format=jpgpng&transparent=false&f=image'
+            ],
+            tileSize: 256,
+            attribution: 'Pinellas County Enterprise GIS'
+          }
+        },
+        layers: [
+          {
+            id: 'esri-world',
+            type: 'raster',
+            source: 'esri-world'
+          },
+          {
+            id: 'osm-streets',
+            type: 'raster',
+            source: 'osm-streets',
+            layout: {
+              visibility: 'none'
+            }
+          },
+          {
+            id: 'pinellas-2025',
+            type: 'raster',
+            source: 'pinellas-2025',
+            layout: {
+              visibility: 'none'
+            }
+          },
+          {
+            id: 'pinellas-2024',
+            type: 'raster',
+            source: 'pinellas-2024',
+            layout: {
+              visibility: 'none'
+            }
+          }
+        ]
+      }
+    });
+
+    map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
+    map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
+
+    let locationWatchId = null;
+    let userPuckMarker = null;
+    let userPuckElement = null;
+    let hasCenteredOnUser = false;
+    let hasStartedHeading = false;
+
+    function ensureUserPuck() {
+      if (userPuckMarker) return userPuckMarker;
+      userPuckElement = document.createElement('div');
+      userPuckElement.className = 'user-puck';
+      userPuckElement.setAttribute('aria-label', 'Your location');
+      userPuckMarker = new maplibregl.Marker({
+        element: userPuckElement,
+        anchor: 'center'
+      });
+      return userPuckMarker;
+    }
+
+    function setUserHeading(degrees) {
+      if (!userPuckElement || degrees === null || Number.isNaN(degrees)) return;
+      userPuckElement.classList.add('has-heading');
+      userPuckElement.style.setProperty('--heading', `${degrees}deg`);
+    }
+
+    function updateUserLocation(position) {
+      const lngLat = [position.coords.longitude, position.coords.latitude];
+      ensureUserPuck().setLngLat(lngLat).addTo(map);
+      if (isMobile && typeof position.coords.heading === 'number') {
+        setUserHeading(position.coords.heading);
+      }
+      if (!hasCenteredOnUser) {
+        hasCenteredOnUser = true;
+        map.easeTo({
+          center: lngLat,
+          zoom: Math.max(map.getZoom(), 16),
+          duration: 700
+        });
+      }
+    }
+
+    function headingFromDeviceEvent(event) {
+      if (typeof event.webkitCompassHeading === 'number') {
+        return event.webkitCompassHeading;
+      }
+      if (typeof event.alpha !== 'number') {
+        return null;
+      }
+      return 360 - event.alpha;
+    }
+
+    async function startMobileHeading() {
+      if (!isMobile || hasStartedHeading || !window.DeviceOrientationEvent) return;
+      hasStartedHeading = true;
+      try {
+        if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+          const permission = await DeviceOrientationEvent.requestPermission();
+          if (permission !== 'granted') return;
+        }
+        const updateHeading = (event) => setUserHeading(headingFromDeviceEvent(event));
+        window.addEventListener('deviceorientationabsolute', updateHeading, true);
+        window.addEventListener('deviceorientation', updateHeading, true);
+      } catch (error) {
+        console.warn('Device orientation unavailable', error);
+      }
+    }
+
+    function startLocationTracking(button) {
+      if (!navigator.geolocation) {
+        button.disabled = true;
+        button.title = 'Location is unavailable';
+        return;
+      }
+      button.classList.add('active');
+      startMobileHeading();
+      if (locationWatchId !== null) return;
+      locationWatchId = navigator.geolocation.watchPosition(
+        updateUserLocation,
+        (error) => console.warn('Geolocation error', error),
+        {
+          enableHighAccuracy: true,
+          maximumAge: 5000,
+          timeout: 12000
+        }
+      );
+    }
+
+    class LocateControl {
+      onAdd() {
+        const container = document.createElement('div');
+        container.className = 'maplibregl-ctrl maplibregl-ctrl-group';
+
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.title = isMobile ? 'Show my location and heading' : 'Show my location';
+        button.setAttribute('aria-label', button.title);
+        button.innerHTML = '<span class="locate-icon" aria-hidden="true"></span>';
+        button.addEventListener('click', () => startLocationTracking(button));
+
+        container.appendChild(button);
+        return container;
+      }
+
+      onRemove() {}
+    }
+
+    map.addControl(new LocateControl(), 'top-right');
+
     function completionDateForCutoff(value) {
       if (!value) return null;
       const text = String(value);
@@ -106,136 +581,113 @@
       return completionDate >= twoYearsAgo;
     }
 
-    // Function to plot projects on the map
+    function escapeHtml(value) {
+      return String(value || '').replace(/[&<>"']/g, (char) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      }[char]));
+    }
+
+    function statusClass(status) {
+      return `status-${String(status || 'unknown').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`;
+    }
+
+    function popupHtml(project) {
+      const details = [
+        project.address ? `<span><strong>Address:</strong> ${escapeHtml(project.address)}</span>` : '',
+        project.completed_at ? `<span><strong>Completed:</strong> ${escapeHtml(project.completed_at)}</span>` : '',
+        project.expected_open ? `<span><strong>Expected:</strong> ${escapeHtml(project.expected_open)}</span>` : '',
+        project.last_verified ? `<span><strong>Verified:</strong> ${escapeHtml(project.last_verified)}</span>` : ''
+      ].filter(Boolean).join('');
+
+      const sources = (project.sources || []).map((source) => (
+        `<li><a href="${escapeHtml(source.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(source.label)}</a></li>`
+      )).join('');
+
+      return `
+        <h2>${escapeHtml(project.name)}</h2>
+        <span class="popup-status">${escapeHtml(project.status)}</span>
+        ${details ? `<div class="popup-details">${details}</div>` : ''}
+        ${project.summary ? `<p>${escapeHtml(project.summary)}</p>` : ''}
+        ${sources ? `<p><strong>Sources</strong></p><ul>${sources}</ul>` : ''}
+      `;
+    }
+
     function plotProjects(projects) {
-      projects.filter(shouldShowProject).forEach((p) => {
-        // Skip entries without coordinates
-        if (!p.lat || !p.lng) return;
-        const marker = L.marker([p.lat, p.lng]).addTo(map);
-        let sourceLinks = '';
-        if (p.sources) {
-          p.sources.forEach((src) => {
-            sourceLinks += `<li><a href="${src.url}" target="_blank" rel="noopener noreferrer">${src.label}</a></li>`;
-          });
-        }
-        let dateInfo = '';
-        if (p.built) {
-          dateInfo += `<strong>Built:</strong> ${p.built}<br>`;
-        }
-        if (p.completed_at) {
-          dateInfo += `<strong>Completed:</strong> ${p.completed_at}<br>`;
-        }
-        if (p.expected_open && (!p.built || p.expected_open !== p.built)) {
-          dateInfo += `<strong>Expected Opening:</strong> ${p.expected_open}<br>`;
-        }
-        if (p.address) {
-          dateInfo += `<strong>Address:</strong> ${p.address}<br>`;
-        }
-        if (p.last_verified) {
-          dateInfo += `<strong>Last verified:</strong> ${p.last_verified}<br>`;
-        }
-        const popupContent =
-          `<strong>${p.name}</strong><br>` +
-          `<em>${p.status}</em><br>` +
-          (dateInfo ? dateInfo : '') +
-          `<p>${p.summary || ''}</p>` +
-          (sourceLinks ? `<p><strong>Sources:</strong></p><ul>${sourceLinks}</ul>` : '');
-        marker.bindPopup(popupContent);
+      const visibleProjects = projects.filter(shouldShowProject).filter((project) => project.lat && project.lng);
+      document.getElementById('projectCount').textContent = `${visibleProjects.length} current projects`;
+
+      visibleProjects.forEach((project) => {
+        const markerElement = document.createElement('button');
+        markerElement.type = 'button';
+        markerElement.className = `project-marker ${statusClass(project.status)}`;
+        markerElement.title = project.name;
+        markerElement.setAttribute('aria-label', project.name);
+
+        new maplibregl.Marker({
+          element: markerElement,
+          anchor: 'bottom'
+        })
+          .setLngLat([project.lng, project.lat])
+          .setPopup(new maplibregl.Popup({ offset: 24 }).setHTML(popupHtml(project)))
+          .addTo(map);
       });
     }
-    // Load data from projects.json; this makes the dataset editable without touching the HTML.
-    fetch('projects.json')
-      .then((resp) => resp.json())
-      .then((data) => {
-        plotProjects(data);
-      })
-      .catch((err) => {
-        console.warn('Could not load projects.json; using fallback data', err);
-        const fallbackProjects = [
-          {
-            id: 'fallback-example',
-            name: 'Example Project',
-            lat: 27.7718,
-            lng: -82.6400,
-            status: 'Unknown',
-            built: null,
-            expected_open: null,
-            summary: 'This fallback project appears because the projects.json file could not be loaded. Serve this page from a web server or adjust the fetch path to load your data properly.',
-            sources: []
-          }
-        ];
-        plotProjects(fallbackProjects);
-      });
-    // User location and orientation markers
-    let userMarker = null;
-    let orientationMarker = null;
-    const orientationIcon = L.divIcon({
-      className: '',
-      html: '<div class="orientation-arrow"></div>',
-      iconSize: [24, 24],
-      iconAnchor: [12, 12]
+
+    function isPinellasDetailVisible() {
+      const center = map.getCenter();
+      return map.getZoom() >= pinellasCoverage.minZoom &&
+        center.lng >= pinellasCoverage.west &&
+        center.lng <= pinellasCoverage.east &&
+        center.lat >= pinellasCoverage.south &&
+        center.lat <= pinellasCoverage.north;
+    }
+
+    function applyImageryMode() {
+      const wantsPinellas = selectedImageryMode === 'pinellas-2025' || selectedImageryMode === 'pinellas-2024';
+      const canShowPinellas = wantsPinellas && isPinellasDetailVisible();
+      const showStreetMap = selectedImageryMode === 'street-map';
+
+      map.setLayoutProperty('esri-world', 'visibility', showStreetMap ? 'none' : 'visible');
+      map.setLayoutProperty('osm-streets', 'visibility', showStreetMap ? 'visible' : 'none');
+      map.setLayoutProperty('pinellas-2025', 'visibility', canShowPinellas && selectedImageryMode === 'pinellas-2025' ? 'visible' : 'none');
+      map.setLayoutProperty('pinellas-2024', 'visibility', canShowPinellas && selectedImageryMode === 'pinellas-2024' ? 'visible' : 'none');
+
+      if (wantsPinellas && !canShowPinellas) {
+        document.getElementById('imageryNote').textContent = 'Global satellite; zoom into Pinellas for local year detail';
+        return;
+      }
+      document.getElementById('imageryNote').textContent = imageryNotes[selectedImageryMode];
+    }
+
+    document.getElementById('imagerySelect').addEventListener('change', (event) => {
+      selectedImageryMode = event.target.value;
+      applyImageryMode();
     });
-    function onLocationFound(e) {
-      const latlng = e.latlng;
-      if (userMarker) {
-        userMarker.setLatLng(latlng);
-      } else {
-        userMarker = L.marker(latlng).addTo(map).bindPopup('You are here');
-      }
-      if (orientationMarker) {
-        orientationMarker.setLatLng(latlng);
-      } else {
-        orientationMarker = L.marker(latlng, { icon: orientationIcon, interactive: false }).addTo(map);
-      }
-    }
-    if (navigator.geolocation) {
-      navigator.geolocation.watchPosition(
-        (pos) => {
-          const latlng = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-          onLocationFound({ latlng });
-        },
-        (err) => {
-          console.warn('Geolocation error', err);
-        },
-        { enableHighAccuracy: true }
-      );
-    }
-    function updateOrientation(alpha) {
-      if (orientationMarker) {
-        const el = orientationMarker.getElement();
-        if (el) {
-          const arrow = el.querySelector('.orientation-arrow');
-          if (arrow) {
-            arrow.style.transform = `rotate(${alpha}deg)`;
-          }
-        }
-      }
-    }
-    if (window.DeviceOrientationEvent) {
-      if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-        DeviceOrientationEvent.requestPermission().then((permissionState) => {
-          if (permissionState === 'granted') {
-            window.addEventListener(
-              'deviceorientation',
-              (event) => {
-                const alpha = event.alpha;
-                if (alpha !== null) updateOrientation(alpha);
-              },
-              true
-            );
-          }
-        }).catch(console.error);
-      } else {
-        window.addEventListener(
-          'deviceorientation',
-          (event) => {
-            const alpha = event.alpha;
-            if (alpha !== null) updateOrientation(alpha);
-          },
-          true
-        );
-      }
-    }
+
+    map.on('moveend', applyImageryMode);
+    map.on('zoomend', applyImageryMode);
+
+    document.getElementById('pitchToggle').addEventListener('click', (event) => {
+      const isActive = event.currentTarget.classList.toggle('active');
+      event.currentTarget.setAttribute('aria-pressed', String(isActive));
+      map.easeTo({
+        pitch: isActive ? (isMobile ? 48 : 55) : 0,
+        bearing: isActive ? (isMobile ? -12 : -18) : 0,
+        duration: 650
+      });
+    });
+
+    fetch('projects.json')
+      .then((response) => response.json())
+      .then(plotProjects)
+      .catch((error) => {
+        console.warn('Could not load projects.json', error);
+        document.getElementById('projectCount').textContent = 'Project data unavailable';
+      });
   </script>
 </body>
 </html>

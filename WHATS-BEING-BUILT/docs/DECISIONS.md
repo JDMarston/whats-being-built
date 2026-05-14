@@ -8,3 +8,15 @@ Architecture and product decisions made over time.
 - Prefer public structured city data over brittle page scraping when available.
 - Treat local articles and developer pages as enrichment and verification sources.
 - Hide completed projects once they are more than two years past completion.
+
+## Map experience
+
+- Use MapLibre GL JS instead of Leaflet so the app can support pitch, bearing, richer styling, and future 3D layers.
+- The app should behave like a world map first. Users can pan and zoom anywhere, even when no local project data has been populated yet.
+- Default to global satellite imagery so the map works outside the first scraped city.
+- Treat local high-resolution imagery, such as Pinellas 2025 or 2024 aerials, as optional detail layers over the global basemap rather than as the whole map.
+- When a local imagery year is selected, show it only near its coverage area and at useful zoom levels; otherwise keep the global basemap visible.
+- Keep a global street map available as an alternate overview layer.
+- On mobile, use a custom location puck with device heading enabled so the user can orient toward a construction site.
+- On desktop, do not request or display device heading.
+- Show the user's location as a blue location puck/dot, not as a project marker.

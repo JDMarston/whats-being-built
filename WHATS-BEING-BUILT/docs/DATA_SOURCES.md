@@ -5,6 +5,7 @@ Public and private sources used to track projects.
 ## Primary public sources
 
 - City of St. Petersburg ArcGIS REST services, especially active development projects, permit applications, and zoning projects.
+- Pinellas County public aerial imagery services for current overhead construction-site context.
 - City public meeting pages, Development Review Commission agendas, staff reports, and minutes.
 - Developer project pages when they provide status, address, scope, or completion information.
 
