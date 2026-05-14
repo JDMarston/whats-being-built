@@ -1,0 +1,19 @@
+# What's Being Built
+
+A simple personal map app for tracking building and construction projects in St. Petersburg, FL.
+
+## How to run locally
+
+Use VS Code Live Server.
+
+Right-click `index.html` and choose:
+
+Open with Live Server
+
+## How data works
+
+The map loads project markers from `projects.json`.
+
+To add a new project, add a new object to `projects.json`.
+
+`private_database.json` is for private research notes and extra project details.

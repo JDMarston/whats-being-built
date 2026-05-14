@@ -1,0 +1,77 @@
+[
+  {
+    "id": "400-central",
+    "name": "400 Central",
+    "address": "400 Central Ave, St. Petersburg, FL",
+    "lat": 27.77083,
+    "lng": -82.63889,
+    "status": "Completed",
+    "built": "2025",
+    "expected_open": "2025",
+    "summary": "A 46‑story, 515‑foot mixed‑use tower by Red Apple Group at the southwest corner of Central Avenue and 4th Street. It includes 301 condominium residences, 45,000 sq ft of office space, roughly 60,000 sq ft of ground‑floor retail and more than 900 parking spaces. Construction began in late 2022; by March 2024 the developer expected completion by spring 2025 with residents moving in by summer 2025【461838560943492†L26-L28】【461838560943492†L76-L77】【65170066877188†L80-L85】.",
+    "sources": [
+      { "label": "Residences at 400 Central – Construction Update", "url": "https://www.theresidences400central.com/construction-update-march-2024/" },
+      { "label": "Florida YIMBY article", "url": "https://floridayimby.com/2026/04/yimby-captures-new-aerial-views-of-the-residences-at-400-central-in-downtown-st-petersburg.html" }
+    ]
+  },
+  {
+    "id": "art-house",
+    "name": "Art House",
+    "address": "275 1st Avenue South, St. Petersburg, FL",
+    "lat": 27.770772,
+    "lng": -82.636726,
+    "status": "Under construction",
+    "built": null,
+    "expected_open": "2026",
+    "summary": "A 42‑story, 450‑foot condominium tower at 275 1st Avenue South developed by Kolter Urban and designed by SB Architects. The tower contains 244 luxury residences over a parking podium with 482 spaces and nearly 5,000 sq ft of ground‑floor retail. Construction began in June 2022, topped out in November 2024, and is expected to be fully completed in early 2026【651821464837229†L58-L61】.",
+    "sources": [
+      { "label": "Florida YIMBY article", "url": "https://floridayimby.com/2025/12/art-house-secures-tco-for-upper-floors-as-closings-begin-in-downtown-st-petersburg.html" },
+      { "label": "Developer page", "url": "https://arthousestpete.com/" }
+    ]
+  },
+  {
+    "id": "reflection",
+    "name": "Reflection",
+    "address": "777 3rd Avenue North, St. Petersburg, FL",
+    "lat": 27.775549,
+    "lng": -82.644294,
+    "status": "Completed",
+    "built": "2024",
+    "expected_open": "2024",
+    "summary": "An 18‑story condominium tower overlooking Mirror Lake with about 88 residences and a rooftop amenity deck. Reflection was constructed in 2024, offering panoramic views of downtown and Tampa Bay【61760676507478†L155-L158】. It features a pool and amenity level on the top floor and cost around $100 million to develop.",
+    "sources": [
+      { "label": "Selling Tampa Bay article", "url": "https://sellingtampabay.com/property/reflection-st-pete/" },
+      { "label": "Reflection St. Pete news", "url": "https://reflectionstpete.com/developers-top-out-st-petersburg-high-rise/" }
+    ]
+  },
+  {
+    "id": "ark-innovation-center",
+    "name": "ARK Innovation Center",
+    "address": "1101 4th Street South, St. Petersburg, FL",
+    "lat": 27.7566,
+    "lng": -82.6375,
+    "status": "Completed",
+    "built": "2024",
+    "expected_open": "2024",
+    "summary": "Also known as the Tampa Bay Innovation Center, this 45,000‑sq‑ft facility in the Innovation District serves as a business incubator and accelerator. The $16 million project includes 30,000 sq ft of incubator space plus offices for ARK Invest and a café. After delays, the center opened in January 2024【523015217603416†L108-L112】.",
+    "sources": [
+      { "label": "St. Pete Catalyst article", "url": "https://stpetecatalyst.com/cafe-opens-at-ark-innovation-center/" },
+      { "label": "Innovation Center update", "url": "https://stpetecatalyst.com/innovation-center-attracts-global-tenant-interest/" }
+    ]
+  },
+  {
+    "id": "the-central",
+    "name": "The Central",
+    "address": "1301 Central Avenue, St. Petersburg, FL",
+    "lat": 27.7725,
+    "lng": -82.6490,
+    "status": "Under construction",
+    "built": null,
+    "expected_open": "2026-2027",
+    "summary": "A transformative 2.1‑acre mixed‑use development in the EDGE District being developed by Ellison Development. The project will include a 168‑key Autograph Collection hotel, a 10‑story trophy office tower with 130,000 sq ft of workspace, over 500 parking spaces, ground‑floor retail, a rooftop pool and 42 workforce‑housing units. Construction was underway in 2025 with site progress shown in the developer’s spring 2025 update; completion is expected in the next couple of years【620590620624149†L63-L123】.",
+    "sources": [
+      { "label": "Ellison Development – The Central", "url": "https://www.ellisondevelopment.com/the-central/" },
+      { "label": "Projects to Watch 2026", "url": "https://stpetecatalyst.com/four-st-pete-projects-to-watch-in-2026/" }
+    ]
+  }
+]

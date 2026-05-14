@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>What’s Being Built – St. Petersburg</title>
+  <!-- Load Leaflet and plugin styles from jsDelivr -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
+    header {
+      padding: 10px;
+      background: #f2f2f2;
+      margin: 0;
+      font-size: 1.4em;
+    }
+    #map {
+      height: 600px;
+      width: 100%;
+    }
+    /* Style for the orientation arrow; the icon will be rotated via JS. */
+    .orientation-arrow {
+      width: 24px;
+      height: 24px;
+      background: #007bff;
+      clip-path: polygon(50% 0%, 100% 100%, 50% 75%, 0% 100%);
+      transform-origin: 50% 50%;
+      pointer-events: none;
+    }
+    .leaflet-popup-content {
+      font-size: 14px;
+      line-height: 1.4;
+    }
+    .leaflet-popup-content ul {
+      padding-left: 18px;
+      margin: 4px 0;
+    }
+    .leaflet-popup-content li {
+      margin: 2px 0;
+    }
+  </style>
+</head>
+<body>
+  <header>What’s Being Built in St. Petersburg</header>
+  <div id="map"></div>
+  <!-- Load Leaflet and plugins from jsDelivr -->
+  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+  <script>
+    // Initialize the map with default view centered on downtown St. Petersburg.
+    const map = L.map('map').setView([27.7718, -82.6400], 14);
+    // Define base layers: standard OpenStreetMap and a satellite imagery layer from Esri.
+    const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap contributors'
+    });
+    const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 19,
+      attribution: 'Imagery © Esri'
+    });
+    // Add OSM layer by default.
+    osmLayer.addTo(map);
+    // Base layers object for the layer control.
+    const baseLayers = {
+      'Map': osmLayer,
+      'Satellite': satelliteLayer
+    };
+    // Add layer control to switch between map and satellite.
+    L.control.layers(baseLayers).addTo(map);
+    // Geocoder control for searching addresses and places using Nominatim.
+    const geocoder = L.Control.geocoder({
+      defaultMarkGeocode: false,
+      geocoder: L.Control.Geocoder.nominatim({ serviceUrl: 'https://nominatim.openstreetmap.org/' })
+    }).on('markgeocode', function(e) {
+      const bbox = e.geocode.bbox;
+      const poly = L.polygon([
+        [bbox.getSouthEast().lat, bbox.getSouthEast().lng],
+        [bbox.getNorthEast().lat, bbox.getNorthEast().lng],
+        [bbox.getNorthWest().lat, bbox.getNorthWest().lng],
+        [bbox.getSouthWest().lat, bbox.getSouthWest().lng]
+      ]);
+      map.fitBounds(poly.getBounds());
+    }).addTo(map);
+    // Function to plot projects on the map
+    function plotProjects(projects) {
+      projects.forEach((p) => {
+        // Skip entries without coordinates
+        if (!p.lat || !p.lng) return;
+        const marker = L.marker([p.lat, p.lng]).addTo(map);
+        let sourceLinks = '';
+        if (p.sources) {
+          p.sources.forEach((src) => {
+            sourceLinks += `<li><a href="${src.url}" target="_blank" rel="noopener noreferrer">${src.label}</a></li>`;
+          });
+        }
+        let dateInfo = '';
+        if (p.built) {
+          dateInfo += `<strong>Built:</strong> ${p.built}<br>`;
+        }
+        if (p.expected_open && (!p.built || p.expected_open !== p.built)) {
+          dateInfo += `<strong>Expected Opening:</strong> ${p.expected_open}<br>`;
+        }
+        const popupContent =
+          `<strong>${p.name}</strong><br>` +
+          `<em>${p.status}</em><br>` +
+          (dateInfo ? dateInfo : '') +
+          `<p>${p.summary || ''}</p>` +
+          (sourceLinks ? `<p><strong>Sources:</strong></p><ul>${sourceLinks}</ul>` : '');
+        marker.bindPopup(popupContent);
+      });
+    }
+    // Load data from projects.json; this makes the dataset editable without touching the HTML.
+    fetch('projects.json')
+      .then((resp) => resp.json())
+      .then((data) => {
+        plotProjects(data);
+      })
+      .catch((err) => {
+        console.warn('Could not load projects.json; using fallback data', err);
+        const fallbackProjects = [
+          {
+            id: 'fallback-example',
+            name: 'Example Project',
+            lat: 27.7718,
+            lng: -82.6400,
+            status: 'Unknown',
+            built: null,
+            expected_open: null,
+            summary: 'This fallback project appears because the projects.json file could not be loaded. Serve this page from a web server or adjust the fetch path to load your data properly.',
+            sources: []
+          }
+        ];
+        plotProjects(fallbackProjects);
+      });
+    // User location and orientation markers
+    let userMarker = null;
+    let orientationMarker = null;
+    const orientationIcon = L.divIcon({
+      className: '',
+      html: '<div class="orientation-arrow"></div>',
+      iconSize: [24, 24],
+      iconAnchor: [12, 12]
+    });
+    function onLocationFound(e) {
+      const latlng = e.latlng;
+      if (userMarker) {
+        userMarker.setLatLng(latlng);
+      } else {
+        userMarker = L.marker(latlng).addTo(map).bindPopup('You are here');
+      }
+      if (orientationMarker) {
+        orientationMarker.setLatLng(latlng);
+      } else {
+        orientationMarker = L.marker(latlng, { icon: orientationIcon, interactive: false }).addTo(map);
+      }
+    }
+    if (navigator.geolocation) {
+      navigator.geolocation.watchPosition(
+        (pos) => {
+          const latlng = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          onLocationFound({ latlng });
+        },
+        (err) => {
+          console.warn('Geolocation error', err);
+        },
+        { enableHighAccuracy: true }
+      );
+    }
+    function updateOrientation(alpha) {
+      if (orientationMarker) {
+        const el = orientationMarker.getElement();
+        if (el) {
+          const arrow = el.querySelector('.orientation-arrow');
+          if (arrow) {
+            arrow.style.transform = `rotate(${alpha}deg)`;
+          }
+        }
+      }
+    }
+    if (window.DeviceOrientationEvent) {
+      if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+        DeviceOrientationEvent.requestPermission().then((permissionState) => {
+          if (permissionState === 'granted') {
+            window.addEventListener(
+              'deviceorientation',
+              (event) => {
+                const alpha = event.alpha;
+                if (alpha !== null) updateOrientation(alpha);
+              },
+              true
+            );
+          }
+        }).catch(console.error);
+      } else {
+        window.addEventListener(
+          'deviceorientation',
+          (event) => {
+            const alpha = event.alpha;
+            if (alpha !== null) updateOrientation(alpha);
+          },
+          true
+        );
+      }
+    }
+  </script>
+</body>
+</html>
