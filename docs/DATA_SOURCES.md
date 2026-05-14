@@ -6,6 +6,7 @@ Public and private sources used to track projects.
 
 - City of St. Petersburg ArcGIS REST services, especially active development projects, permit applications, and zoning projects.
 - Pinellas County public aerial imagery services for current overhead construction-site context.
+- Hillsborough County public aerial imagery services for Tampa-area overhead context. The public 1938-2025 aerial imagery web map includes 2025 imagery collected in January 2025 and served through `AerialsNew/Aerials_2025`.
 - City public meeting pages, Development Review Commission agendas, staff reports, and minutes.
 - Developer project pages when they provide status, address, scope, or completion information.
 
