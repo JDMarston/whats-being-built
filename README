@@ -10,6 +10,16 @@ Right-click `index.html` and choose:
 
 Open with Live Server
 
+To test from a phone on the same Wi-Fi network, serve the folder on all local interfaces:
+
+```powershell
+.\scripts\serve-local.ps1 -HostName 0.0.0.0 -Port 5173
+```
+
+This uses Node, which is already needed by the planned Vite/React stack. Then open `http://YOUR_PC_IP:5173` on the phone. Use `ipconfig` to find the PC's Wi-Fi IPv4 address. If Windows asks about firewall access, allow private-network access for local testing.
+
+Phone location and heading may require HTTPS in some browsers. For full mobile testing, use a free HTTPS deploy or a trusted local HTTPS tunnel.
+
 ## How data works
 
 The map loads project markers from `projects.json`.
@@ -17,3 +27,7 @@ The map loads project markers from `projects.json`.
 To add a new project, add a new object to `projects.json`.
 
 `private_database.json` is for private research notes and extra project details.
+
+## Map provider boundary
+
+The app currently uses MapLibre, but feature code should go through the `mapView` provider boundary in `index.html`. That keeps project data, markers, user location, imagery switching, and 3D controls easier to move later if the app upgrades to a higher-quality 3D map provider.

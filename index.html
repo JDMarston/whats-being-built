@@ -6,6 +6,7 @@
   <title>What's Being Built - St. Petersburg</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.css">
   <style>
+    /* Shared theme values for the full-screen map UI. */
     :root {
       color-scheme: dark;
       --panel: rgba(13, 20, 24, 0.86);
@@ -37,6 +38,7 @@
       min-height: 100dvh;
     }
 
+    /* Keep the header fixed above a map that fills the remaining viewport. */
     .app-shell {
       display: grid;
       grid-template-rows: auto 1fr;
@@ -121,6 +123,7 @@
       min-height: 0;
     }
 
+    /* Small status panel describing which imagery source is currently visible. */
     .imagery-badge {
       position: absolute;
       left: max(12px, env(safe-area-inset-left));
@@ -150,6 +153,7 @@
       line-height: 1.25;
     }
 
+    /* Custom project pins are buttons so they stay keyboard-accessible. */
     .project-marker {
       display: grid;
       place-items: center;
@@ -312,6 +316,7 @@
       display: block;
     }
 
+    /* Stack the controls on small screens and leave room for MapLibre buttons. */
     @media (max-width: 720px) {
       header {
         align-items: stretch;
@@ -362,6 +367,7 @@
 </head>
 <body>
   <div class="app-shell">
+    <!-- Top controls for project count, imagery mode, and 3D tilt. -->
     <header>
       <div class="brand">
         <h1>What's Being Built in St. Petersburg</h1>
@@ -379,6 +385,7 @@
         <button id="pitchToggle" type="button" class="active" aria-pressed="true" title="Toggle 3D view">3D</button>
       </div>
     </header>
+    <!-- MapLibre renders the basemap, aerial layers, buildings, and markers here. -->
     <div id="map"></div>
     <div id="imageryBadge" class="imagery-badge" aria-live="polite">
       <strong id="imageryDate">Imagery date loading</strong>
@@ -391,12 +398,15 @@
     const isMobile = window.matchMedia('(pointer: coarse), (max-width: 720px)').matches;
     const mapCenter = [-82.6400, 27.7718];
 
-    // Provider-specific map plumbing lives here so project markers and data can
-    // survive a future move to Google 3D Tiles, Cesium, Mapbox, or another map.
-    const mapProvider = 'maplibre-public';
+    // Keep the rest of the app talking to a small map-provider boundary.
+    // A future Google 3D Tiles, Cesium, Mapbox, or ArcGIS provider should match
+    // the mapView contract instead of leaking provider calls everywhere.
+    const mapProviderName = 'maplibre-public';
     const globalImageryLayerId = 'esri-world';
     const streetMapLayerId = 'osm-streets';
     const imageryMetadataUrl = 'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/4/query';
+
+    // Local aerial layers are only shown when the map is inside their coverage bounds.
     const localAerialImagery = [
       {
         id: 'pinellas-2025',
@@ -471,6 +481,7 @@
     let metadataAbortController = null;
     let metadataRequestId = 0;
 
+    // Initialize the map with free/public raster imagery plus OpenFreeMap buildings.
     const map = new maplibregl.Map({
       container: 'map',
       center: mapCenter,
@@ -630,22 +641,127 @@
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
     map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
 
+    function createMapLibreView(mapInstance) {
+      let userLocationMarker = null;
+
+      return {
+        name: mapProviderName,
+        getCenter() {
+          return mapInstance.getCenter();
+        },
+        getZoom() {
+          return mapInstance.getZoom();
+        },
+        onReady(callback) {
+          mapInstance.once('style.load', callback);
+          mapInstance.on('load', callback);
+        },
+        onViewChangeEnd(callback) {
+          mapInstance.on('moveend', callback);
+          mapInstance.on('zoomend', callback);
+        },
+        whenLayerReady(layerId, callback) {
+          window.setTimeout(() => {
+            if (mapInstance.getLayer(layerId)) callback();
+          }, 1200);
+        },
+        setImageryVisibility(nextMode) {
+          const showStreetMap = nextMode === 'street-map';
+          mapInstance.setLayoutProperty(globalImageryLayerId, 'visibility', showStreetMap ? 'none' : 'visible');
+          mapInstance.setLayoutProperty(streetMapLayerId, 'visibility', showStreetMap ? 'visible' : 'none');
+          localAerialLayerIds.forEach((layerId) => {
+            mapInstance.setLayoutProperty(layerId, 'visibility', nextMode === layerId ? 'visible' : 'none');
+          });
+        },
+        set3DMode(enabled) {
+          mapInstance.easeTo({
+            pitch: enabled ? (isMobile ? 48 : 55) : 0,
+            bearing: enabled ? (isMobile ? -12 : -18) : 0,
+            duration: 650
+          });
+          mapInstance.setLayoutProperty('building-3d', 'visibility', enabled ? 'visible' : 'none');
+          mapInstance.setLayoutProperty('terrain-shade', 'visibility', enabled ? 'visible' : 'none');
+          mapInstance.setTerrain(enabled ? {
+            source: 'terrain',
+            exaggeration: isMobile ? 1.35 : 1.5
+          } : null);
+        },
+        addProjectMarker(project, markerElement, popupMarkup) {
+          new maplibregl.Marker({
+            element: markerElement,
+            anchor: 'bottom'
+          })
+            .setLngLat([project.lng, project.lat])
+            .setPopup(new maplibregl.Popup({ offset: 24 }).setHTML(popupMarkup))
+            .addTo(mapInstance);
+        },
+        setUserLocationMarker(markerElement, lngLat) {
+          if (!userLocationMarker) {
+            userLocationMarker = new maplibregl.Marker({
+              element: markerElement,
+              anchor: 'center'
+            });
+          }
+          userLocationMarker.setLngLat(lngLat).addTo(mapInstance);
+        },
+        centerOnLocation(lngLat) {
+          mapInstance.easeTo({
+            center: lngLat,
+            zoom: Math.max(mapInstance.getZoom(), 16),
+            duration: 700
+          });
+        },
+        addLocateControl(startTracking) {
+          mapInstance.addControl(new LocateControl(startTracking), 'top-right');
+        }
+      };
+    }
+
+    class LocateControl {
+      constructor(startTracking) {
+        this.startTracking = startTracking;
+      }
+
+      onAdd() {
+        const container = document.createElement('div');
+        container.className = 'maplibregl-ctrl maplibregl-ctrl-group';
+
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.title = isMobile ? 'Show my location and heading' : 'Show my location';
+        button.setAttribute('aria-label', button.title);
+        button.innerHTML = '<span class="locate-icon" aria-hidden="true"></span>';
+        button.addEventListener('click', () => this.startTracking(button));
+
+        container.appendChild(button);
+        return container;
+      }
+
+      onRemove() {}
+    }
+
+    function createMapProvider(providerName) {
+      if (providerName === 'maplibre-public') {
+        return createMapLibreView(map);
+      }
+
+      throw new Error(`Unsupported map provider: ${providerName}`);
+    }
+
+    const mapView = createMapProvider(mapProviderName);
+
     let locationWatchId = null;
-    let userPuckMarker = null;
     let userPuckElement = null;
     let hasCenteredOnUser = false;
     let hasStartedHeading = false;
 
-    function ensureUserPuck() {
-      if (userPuckMarker) return userPuckMarker;
+    // Geolocation uses a custom marker so mobile users can see their heading.
+    function ensureUserPuckElement() {
+      if (userPuckElement) return userPuckElement;
       userPuckElement = document.createElement('div');
       userPuckElement.className = 'user-puck';
       userPuckElement.setAttribute('aria-label', 'Your location');
-      userPuckMarker = new maplibregl.Marker({
-        element: userPuckElement,
-        anchor: 'center'
-      });
-      return userPuckMarker;
+      return userPuckElement;
     }
 
     function setUserHeading(degrees) {
@@ -656,17 +772,13 @@
 
     function updateUserLocation(position) {
       const lngLat = [position.coords.longitude, position.coords.latitude];
-      ensureUserPuck().setLngLat(lngLat).addTo(map);
+      mapView.setUserLocationMarker(ensureUserPuckElement(), lngLat);
       if (isMobile && typeof position.coords.heading === 'number') {
         setUserHeading(position.coords.heading);
       }
       if (!hasCenteredOnUser) {
         hasCenteredOnUser = true;
-        map.easeTo({
-          center: lngLat,
-          zoom: Math.max(map.getZoom(), 16),
-          duration: 700
-        });
+        mapView.centerOnLocation(lngLat);
       }
     }
 
@@ -716,27 +828,9 @@
       );
     }
 
-    class LocateControl {
-      onAdd() {
-        const container = document.createElement('div');
-        container.className = 'maplibregl-ctrl maplibregl-ctrl-group';
+    mapView.addLocateControl(startLocationTracking);
 
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.title = isMobile ? 'Show my location and heading' : 'Show my location';
-        button.setAttribute('aria-label', button.title);
-        button.innerHTML = '<span class="locate-icon" aria-hidden="true"></span>';
-        button.addEventListener('click', () => startLocationTracking(button));
-
-        container.appendChild(button);
-        return container;
-      }
-
-      onRemove() {}
-    }
-
-    map.addControl(new LocateControl(), 'top-right');
-
+    // Completed projects drop off the map after two years to keep the view current.
     function completionDateForCutoff(value) {
       if (!value) return null;
       const text = String(value);
@@ -798,6 +892,7 @@
       const visibleProjects = projects.filter(shouldShowProject).filter((project) => project.lat && project.lng);
       document.getElementById('projectCount').textContent = `${visibleProjects.length} current projects`;
 
+      // Each project gets a marker and a short popup sourced from projects.json.
       visibleProjects.forEach((project) => {
         const markerElement = document.createElement('button');
         markerElement.type = 'button';
@@ -805,13 +900,7 @@
         markerElement.title = project.name;
         markerElement.setAttribute('aria-label', project.name);
 
-        new maplibregl.Marker({
-          element: markerElement,
-          anchor: 'bottom'
-        })
-          .setLngLat([project.lng, project.lat])
-          .setPopup(new maplibregl.Popup({ offset: 24 }).setHTML(popupHtml(project)))
-          .addTo(map);
+        mapView.addProjectMarker(project, markerElement, popupHtml(project));
       });
     }
 
@@ -820,8 +909,8 @@
     }
 
     function isLocalAerialVisible(layer) {
-      const center = map.getCenter();
-      return map.getZoom() >= layer.minZoom &&
+      const center = mapView.getCenter();
+      return mapView.getZoom() >= layer.minZoom &&
         center.lng >= layer.bounds.west &&
         center.lng <= layer.bounds.east &&
         center.lat >= layer.bounds.south &&
@@ -885,6 +974,7 @@
       return pieces.join(' - ');
     }
 
+    // Ask Esri what source/date is visible for the current map center and zoom.
     async function updateGlobalImageryMetadata() {
       const requestId = ++metadataRequestId;
       if (metadataAbortController) {
@@ -892,8 +982,8 @@
       }
       metadataAbortController = new AbortController();
 
-      const center = map.getCenter();
-      const zoomLevel = Math.max(0, Math.min(20, Math.round(map.getZoom())));
+      const center = mapView.getCenter();
+      const zoomLevel = Math.max(0, Math.min(20, Math.round(mapView.getZoom())));
       const params = new URLSearchParams({
         f: 'json',
         geometry: `${center.lng},${center.lat}`,
@@ -955,13 +1045,8 @@
       const requestedLocalLayer = localAerialById(selectedImageryMode);
       const canShowRequestedLocalLayer = requestedLocalLayer && isLocalAerialVisible(requestedLocalLayer);
       const nextMode = canShowRequestedLocalLayer || !requestedLocalLayer ? visibleImageryMode() : 'global-satellite';
-      const showStreetMap = nextMode === 'street-map';
 
-      map.setLayoutProperty(globalImageryLayerId, 'visibility', showStreetMap ? 'none' : 'visible');
-      map.setLayoutProperty(streetMapLayerId, 'visibility', showStreetMap ? 'visible' : 'none');
-      localAerialLayerIds.forEach((layerId) => {
-        map.setLayoutProperty(layerId, 'visibility', nextMode === layerId ? 'visible' : 'none');
-      });
+      mapView.setImageryVisibility(nextMode);
 
       activeImageryMode = nextMode;
       if (selectedImageryMode === 'auto') {
@@ -975,39 +1060,23 @@
       updateImageryBadge();
     }
 
+    // Re-check imagery after user changes or map movement because local layers have bounds.
     imagerySelect.addEventListener('change', (event) => {
       selectedImageryMode = event.target.value;
       applyImageryMode();
     });
 
-    map.once('style.load', applyImageryMode);
-    map.on('load', applyImageryMode);
-    map.on('moveend', applyImageryMode);
-    map.on('zoomend', applyImageryMode);
-    window.setTimeout(() => {
-      if (map.getLayer(globalImageryLayerId)) applyImageryMode();
-    }, 1200);
-
-    function set3DMode(enabled) {
-      map.easeTo({
-        pitch: enabled ? (isMobile ? 48 : 55) : 0,
-        bearing: enabled ? (isMobile ? -12 : -18) : 0,
-        duration: 650
-      });
-      map.setLayoutProperty('building-3d', 'visibility', enabled ? 'visible' : 'none');
-      map.setLayoutProperty('terrain-shade', 'visibility', enabled ? 'visible' : 'none');
-      map.setTerrain(enabled ? {
-        source: 'terrain',
-        exaggeration: isMobile ? 1.35 : 1.5
-      } : null);
-    }
+    mapView.onReady(applyImageryMode);
+    mapView.onViewChangeEnd(applyImageryMode);
+    mapView.whenLayerReady(globalImageryLayerId, applyImageryMode);
 
     document.getElementById('pitchToggle').addEventListener('click', (event) => {
       const isActive = event.currentTarget.classList.toggle('active');
       event.currentTarget.setAttribute('aria-pressed', String(isActive));
-      set3DMode(isActive);
+      mapView.set3DMode(isActive);
     });
 
+    // Project data stays in a simple local JSON file for now.
     fetch('projects.json')
       .then((response) => response.json())
       .then(plotProjects)
