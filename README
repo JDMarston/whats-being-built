@@ -4,11 +4,17 @@ A simple personal map app for tracking building and construction projects in St.
 
 ## How to run locally
 
-Use VS Code Live Server.
+Install dependencies once:
 
-Right-click `index.html` and choose:
+```powershell
+npm install
+```
 
-Open with Live Server
+Then start Vite:
+
+```powershell
+npm run dev
+```
 
 To test from a phone on the same Wi-Fi network, serve the folder on all local interfaces:
 
@@ -16,18 +22,29 @@ To test from a phone on the same Wi-Fi network, serve the folder on all local in
 .\scripts\serve-local.ps1 -HostName 0.0.0.0 -Port 5173
 ```
 
-This uses Node, which is already needed by the planned Vite/React stack. Then open `http://YOUR_PC_IP:5173` on the phone. Use `ipconfig` to find the PC's Wi-Fi IPv4 address. If Windows asks about firewall access, allow private-network access for local testing.
+Then open `http://YOUR_PC_IP:5173` on the phone. Use `ipconfig` to find the PC's Wi-Fi IPv4 address. If Windows asks about firewall access, allow private-network access for local testing.
 
 Phone location and heading may require HTTPS in some browsers. For full mobile testing, use a free HTTPS deploy or a trusted local HTTPS tunnel.
 
 ## How data works
 
-The map loads project markers from `projects.json`.
+The map loads project markers from `projects.json` through `src/lib/projects.ts`.
 
 To add a new project, add a new object to `projects.json`.
+
+See `docs/DATA_MODEL.md` for the full public data schema and add-a-project checklist.
+
+Use canonical machine values for `status`:
+
+- `proposed`
+- `approved`
+- `under_construction`
+- `recently_completed`
+
+Human labels are rendered by the app, so future filters can rely on stable values.
 
 `private_database.json` is for private research notes and extra project details.
 
 ## Map provider boundary
 
-The app currently uses MapLibre, but feature code should go through the `mapView` provider boundary in `index.html`. That keeps project data, markers, user location, imagery switching, and 3D controls easier to move later if the app upgrades to a higher-quality 3D map provider.
+The app currently uses MapLibre, but feature code should go through the `mapView` provider boundary in `src/lib/mapProvider.ts`. That keeps project data, markers, user location, imagery switching, and 3D controls easier to move later if the app upgrades to a higher-quality 3D map provider.
