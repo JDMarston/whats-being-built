@@ -21,4 +21,6 @@ Architecture and product decisions made over time.
 - On desktop, do not request or display device heading.
 - Show the user's location as a blue location puck/dot, not as a project marker.
 - Keep map provider choices and local aerial imagery layers in a small registry inside the map UI. This keeps project markers, project JSON, and popup behavior separate from the current MapLibre/free-public basemap implementation so a later Google 3D Tiles, Cesium, Mapbox, or other provider upgrade is less invasive.
+- Route app behavior through a small `mapView` provider boundary in `index.html`. Project markers, user location, imagery toggles, view movement, and 3D toggling should call that boundary instead of directly calling MapLibre APIs from feature code.
+- Keep direct MapLibre calls limited to the current provider setup until there is a reason to split the app into modules or add a premium 3D provider.
 - The "newest imagery" behavior means newest known public local aerial layer for the current viewport first, then Esri World Imagery with Esri's metadata as fallback. Esri World Imagery metadata can lag local county services.
