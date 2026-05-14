@@ -121,6 +121,35 @@
       min-height: 0;
     }
 
+    .imagery-badge {
+      position: absolute;
+      left: max(12px, env(safe-area-inset-left));
+      bottom: max(26px, env(safe-area-inset-bottom));
+      z-index: 1;
+      max-width: min(360px, calc(100vw - 24px));
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--text);
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      pointer-events: none;
+    }
+
+    .imagery-badge strong {
+      display: block;
+      font-size: 0.85rem;
+      line-height: 1.2;
+    }
+
+    .imagery-badge span {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 0.72rem;
+      line-height: 1.25;
+    }
+
     .project-marker {
       display: grid;
       place-items: center;
@@ -323,6 +352,11 @@
         width: 32px;
         height: 32px;
       }
+
+      .imagery-badge {
+        bottom: 18px;
+        max-width: calc(100vw - 82px);
+      }
     }
   </style>
 </head>
@@ -333,40 +367,109 @@
         <h1>What's Being Built in St. Petersburg</h1>
         <div class="meta">
           <span id="projectCount">Loading projects</span>
-          <span id="imageryNote">Global satellite imagery</span>
+          <span id="imageryNote">Auto newest aerial when available</span>
         </div>
       </div>
       <div class="toolbar">
         <select id="imagerySelect" aria-label="Imagery layer">
+          <option value="auto">Auto newest aerial</option>
           <option value="global-satellite">Global satellite</option>
           <option value="street-map">Street map</option>
-          <option value="pinellas-2025">Pinellas 2025 detail</option>
-          <option value="pinellas-2024">Pinellas 2024 detail</option>
         </select>
         <button id="pitchToggle" type="button" class="active" aria-pressed="true" title="Toggle 3D view">3D</button>
       </div>
     </header>
     <div id="map"></div>
+    <div id="imageryBadge" class="imagery-badge" aria-live="polite">
+      <strong id="imageryDate">Imagery date loading</strong>
+      <span id="imagerySource">Checking the current map view</span>
+    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
   <script>
     const isMobile = window.matchMedia('(pointer: coarse), (max-width: 720px)').matches;
     const mapCenter = [-82.6400, 27.7718];
-    const pinellasCoverage = {
-      west: -82.94,
-      south: 27.55,
-      east: -82.50,
-      north: 28.20,
-      minZoom: 10.5
-    };
+
+    // Provider-specific map plumbing lives here so project markers and data can
+    // survive a future move to Google 3D Tiles, Cesium, Mapbox, or another map.
+    const mapProvider = 'maplibre-public';
+    const globalImageryLayerId = 'esri-world';
+    const streetMapLayerId = 'osm-streets';
+    const imageryMetadataUrl = 'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/4/query';
+    const localAerialImagery = [
+      {
+        id: 'pinellas-2025',
+        optionLabel: 'Pinellas 2025 detail',
+        note: 'Pinellas 2025 detail over global imagery',
+        autoNote: 'Auto: Pinellas 2025 local aerials',
+        dateLabel: '2025',
+        sourceLabel: 'Pinellas County Enterprise GIS',
+        resolutionLabel: '0.08 m',
+        dateRank: 2025,
+        priority: 100,
+        minZoom: 10.5,
+        bounds: {
+          west: -82.94,
+          south: 27.55,
+          east: -82.50,
+          north: 28.20
+        }
+      },
+      {
+        id: 'hillsborough-2025',
+        optionLabel: 'Hillsborough 2025 detail',
+        note: 'Hillsborough 2025 detail over global imagery',
+        autoNote: 'Auto: Hillsborough 2025 local aerials',
+        dateLabel: 'Jan 2025',
+        sourceLabel: 'Hillsborough County Geospatial Services',
+        resolutionLabel: '0.15 m',
+        dateRank: 2025,
+        priority: 90,
+        minZoom: 10.5,
+        bounds: {
+          west: -82.78,
+          south: 27.56,
+          east: -82.05,
+          north: 28.19
+        }
+      },
+      {
+        id: 'pinellas-2024',
+        optionLabel: 'Pinellas 2024 detail',
+        note: 'Pinellas 2024 detail over global imagery',
+        autoNote: 'Auto: Pinellas 2024 local aerials',
+        dateLabel: '2024',
+        sourceLabel: 'Pinellas County Enterprise GIS',
+        dateRank: 2024,
+        priority: 80,
+        minZoom: 10.5,
+        bounds: {
+          west: -82.94,
+          south: 27.55,
+          east: -82.50,
+          north: 28.20
+        }
+      }
+    ];
+    const localAerialLayerIds = localAerialImagery.map((layer) => layer.id);
     const imageryNotes = {
+      'auto': 'Auto newest aerial when available',
       'global-satellite': 'Global satellite imagery',
-      'street-map': 'Global street map',
-      'pinellas-2025': 'Pinellas 2025 detail over global imagery',
-      'pinellas-2024': 'Pinellas 2024 detail over global imagery'
+      'street-map': 'Global street map'
     };
-    let selectedImageryMode = 'global-satellite';
+    const imagerySelect = document.getElementById('imagerySelect');
+    localAerialImagery.forEach((layer) => {
+      imageryNotes[layer.id] = layer.note;
+      const option = document.createElement('option');
+      option.value = layer.id;
+      option.textContent = layer.optionLabel;
+      imagerySelect.appendChild(option);
+    });
+    let selectedImageryMode = 'auto';
+    let activeImageryMode = 'global-satellite';
+    let metadataAbortController = null;
+    let metadataRequestId = 0;
 
     const map = new maplibregl.Map({
       container: 'map',
@@ -375,6 +478,7 @@
       pitch: isMobile ? 48 : 55,
       bearing: isMobile ? -12 : -18,
       maxZoom: 20,
+      maxPitch: 85,
       hash: true,
       attributionControl: false,
       style: {
@@ -413,6 +517,25 @@
             ],
             tileSize: 256,
             attribution: 'Pinellas County Enterprise GIS'
+          },
+          'hillsborough-2025': {
+            type: 'raster',
+            tiles: [
+              'https://maps.hillsboroughcounty.org/arcgis/rest/services/AerialsNew/Aerials_2025/ImageServer/tile/{z}/{y}/{x}'
+            ],
+            tileSize: 256,
+            attribution: 'Hillsborough County Geospatial Services'
+          },
+          'openmaptiles': {
+            type: 'vector',
+            url: 'https://tiles.openfreemap.org/planet',
+            attribution: '<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">&copy; OpenMapTiles</a> Data from <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'
+          },
+          'terrain': {
+            type: 'raster-dem',
+            url: 'https://demotiles.maplibre.org/terrain-tiles/tiles.json',
+            tileSize: 256,
+            attribution: '<a href="https://earth.jaxa.jp/en/data/policy/" target="_blank" rel="noopener">AW3D30 (JAXA)</a>'
           }
         },
         layers: [
@@ -444,8 +567,63 @@
             layout: {
               visibility: 'none'
             }
+          },
+          {
+            id: 'hillsborough-2025',
+            type: 'raster',
+            source: 'hillsborough-2025',
+            layout: {
+              visibility: 'none'
+            }
+          },
+          {
+            id: 'terrain-shade',
+            type: 'hillshade',
+            source: 'terrain',
+            paint: {
+              'hillshade-shadow-color': '#1a2429',
+              'hillshade-highlight-color': '#ffffff',
+              'hillshade-accent-color': '#5b6d72',
+              'hillshade-exaggeration': 0.25
+            }
+          },
+          {
+            id: 'building-3d',
+            type: 'fill-extrusion',
+            source: 'openmaptiles',
+            'source-layer': 'building',
+            minzoom: 14,
+            filter: [
+              'all',
+              ['!=', ['get', 'hide_3d'], true]
+            ],
+            paint: {
+              'fill-extrusion-color': [
+                'case',
+                ['has', 'colour'],
+                ['get', 'colour'],
+                '#d7d1c5'
+              ],
+              'fill-extrusion-height': [
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                14,
+                0,
+                14.8,
+                ['coalesce', ['get', 'render_height'], 8]
+              ],
+              'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0],
+              'fill-extrusion-opacity': 0.72,
+              'fill-extrusion-vertical-gradient': true
+            }
           }
-        ]
+        ],
+        terrain: {
+          source: 'terrain',
+          exaggeration: isMobile ? 1.35 : 1.5
+        },
+        sky: {}
       }
     });
 
@@ -637,48 +815,197 @@
       });
     }
 
-    function isPinellasDetailVisible() {
+    function localAerialById(id) {
+      return localAerialImagery.find((layer) => layer.id === id);
+    }
+
+    function isLocalAerialVisible(layer) {
       const center = map.getCenter();
-      return map.getZoom() >= pinellasCoverage.minZoom &&
-        center.lng >= pinellasCoverage.west &&
-        center.lng <= pinellasCoverage.east &&
-        center.lat >= pinellasCoverage.south &&
-        center.lat <= pinellasCoverage.north;
+      return map.getZoom() >= layer.minZoom &&
+        center.lng >= layer.bounds.west &&
+        center.lng <= layer.bounds.east &&
+        center.lat >= layer.bounds.south &&
+        center.lat <= layer.bounds.north;
+    }
+
+    function bestLocalAerialForView() {
+      return localAerialImagery
+        .filter(isLocalAerialVisible)
+        .sort((a, b) => b.dateRank - a.dateRank || b.priority - a.priority)[0] || null;
+    }
+
+    function visibleImageryMode() {
+      if (selectedImageryMode === 'auto') {
+        return bestLocalAerialForView()?.id || 'global-satellite';
+      }
+      return selectedImageryMode;
+    }
+
+    function setImageryBadge(dateText, sourceText) {
+      document.getElementById('imageryDate').textContent = dateText;
+      document.getElementById('imagerySource').textContent = sourceText;
+    }
+
+    function formatResolution(meters) {
+      const value = Number(meters);
+      if (!Number.isFinite(value) || value <= 0) return '';
+      return value < 1 ? `${Math.round(value * 100)} cm` : `${value.toFixed(value < 10 ? 1 : 0)} m`;
+    }
+
+    function formatEsriDate(attributes) {
+      if (attributes.SRC_DATE2) {
+        const date = new Date(attributes.SRC_DATE2);
+        if (!Number.isNaN(date.getTime())) {
+          return date.toLocaleDateString(undefined, {
+            month: 'short',
+            year: 'numeric',
+            timeZone: 'UTC'
+          });
+        }
+      }
+
+      const value = String(attributes.SRC_DATE || '');
+      if (/^\d{8}$/.test(value)) {
+        const date = new Date(Date.UTC(Number(value.slice(0, 4)), Number(value.slice(4, 6)) - 1, Number(value.slice(6, 8))));
+        return date.toLocaleDateString(undefined, {
+          month: 'short',
+          year: 'numeric',
+          timeZone: 'UTC'
+        });
+      }
+      return 'Date unavailable';
+    }
+
+    function describeEsriMetadata(attributes) {
+      const pieces = [
+        attributes.SRC_DESC || attributes.NICE_NAME || 'Esri World Imagery',
+        formatResolution(attributes.SRC_RES),
+        attributes.ReleaseName
+      ].filter(Boolean);
+      return pieces.join(' - ');
+    }
+
+    async function updateGlobalImageryMetadata() {
+      const requestId = ++metadataRequestId;
+      if (metadataAbortController) {
+        metadataAbortController.abort();
+      }
+      metadataAbortController = new AbortController();
+
+      const center = map.getCenter();
+      const zoomLevel = Math.max(0, Math.min(20, Math.round(map.getZoom())));
+      const params = new URLSearchParams({
+        f: 'json',
+        geometry: `${center.lng},${center.lat}`,
+        geometryType: 'esriGeometryPoint',
+        inSR: '4326',
+        spatialRel: 'esriSpatialRelIntersects',
+        outFields: 'SRC_DATE,SRC_DATE2,SRC_RES,SRC_DESC,NICE_NAME,NICE_DESC,MinMapLevel,MaxMapLevel,DrawOrder,ReleaseName',
+        returnGeometry: 'false',
+        where: `MinMapLevel <= ${zoomLevel} AND MaxMapLevel >= ${zoomLevel}`,
+        orderByFields: 'DrawOrder DESC'
+      });
+
+      try {
+        const response = await fetch(`${imageryMetadataUrl}?${params}`, {
+          signal: metadataAbortController.signal
+        });
+        if (!response.ok) throw new Error(`Metadata request failed: ${response.status}`);
+        const data = await response.json();
+        if (requestId !== metadataRequestId || activeImageryMode !== 'global-satellite') return;
+
+        const attributes = data.features?.[0]?.attributes;
+        if (!attributes) {
+          setImageryBadge('Imagery date unavailable', 'Esri World Imagery metadata was not returned here');
+          return;
+        }
+
+        setImageryBadge(`Imagery: ${formatEsriDate(attributes)}`, describeEsriMetadata(attributes));
+      } catch (error) {
+        if (error.name === 'AbortError') return;
+        console.warn('Could not load imagery metadata', error);
+        if (requestId === metadataRequestId && activeImageryMode === 'global-satellite') {
+          setImageryBadge('Imagery date unavailable', 'Esri World Imagery metadata request failed');
+        }
+      }
+    }
+
+    function updateImageryBadge() {
+      if (activeImageryMode === 'street-map') {
+        setImageryBadge('Street map', 'Imagery date not applicable');
+        return;
+      }
+
+      const localLayer = localAerialById(activeImageryMode);
+      if (localLayer) {
+        const details = [
+          localLayer.sourceLabel,
+          localLayer.resolutionLabel,
+          localLayer.dateLabel.length === 4 ? 'collection month not published in this service' : ''
+        ].filter(Boolean).join(' - ');
+        setImageryBadge(`Imagery: ${localLayer.dateLabel}`, details);
+        return;
+      }
+
+      setImageryBadge('Imagery date loading', 'Checking Esri World Imagery metadata');
+      updateGlobalImageryMetadata();
     }
 
     function applyImageryMode() {
-      const wantsPinellas = selectedImageryMode === 'pinellas-2025' || selectedImageryMode === 'pinellas-2024';
-      const canShowPinellas = wantsPinellas && isPinellasDetailVisible();
-      const showStreetMap = selectedImageryMode === 'street-map';
+      const requestedLocalLayer = localAerialById(selectedImageryMode);
+      const canShowRequestedLocalLayer = requestedLocalLayer && isLocalAerialVisible(requestedLocalLayer);
+      const nextMode = canShowRequestedLocalLayer || !requestedLocalLayer ? visibleImageryMode() : 'global-satellite';
+      const showStreetMap = nextMode === 'street-map';
 
-      map.setLayoutProperty('esri-world', 'visibility', showStreetMap ? 'none' : 'visible');
-      map.setLayoutProperty('osm-streets', 'visibility', showStreetMap ? 'visible' : 'none');
-      map.setLayoutProperty('pinellas-2025', 'visibility', canShowPinellas && selectedImageryMode === 'pinellas-2025' ? 'visible' : 'none');
-      map.setLayoutProperty('pinellas-2024', 'visibility', canShowPinellas && selectedImageryMode === 'pinellas-2024' ? 'visible' : 'none');
+      map.setLayoutProperty(globalImageryLayerId, 'visibility', showStreetMap ? 'none' : 'visible');
+      map.setLayoutProperty(streetMapLayerId, 'visibility', showStreetMap ? 'visible' : 'none');
+      localAerialLayerIds.forEach((layerId) => {
+        map.setLayoutProperty(layerId, 'visibility', nextMode === layerId ? 'visible' : 'none');
+      });
 
-      if (wantsPinellas && !canShowPinellas) {
-        document.getElementById('imageryNote').textContent = 'Global satellite; zoom into Pinellas for local year detail';
-        return;
+      activeImageryMode = nextMode;
+      if (selectedImageryMode === 'auto') {
+        document.getElementById('imageryNote').textContent = localAerialById(nextMode)?.autoNote || 'Auto: Esri latest global imagery';
+      } else if (requestedLocalLayer && !canShowRequestedLocalLayer) {
+        document.getElementById('imageryNote').textContent = 'Global satellite; zoom into the layer coverage area for local year detail';
+      } else {
+        document.getElementById('imageryNote').textContent = imageryNotes[selectedImageryMode];
       }
-      document.getElementById('imageryNote').textContent = imageryNotes[selectedImageryMode];
+
+      updateImageryBadge();
     }
 
-    document.getElementById('imagerySelect').addEventListener('change', (event) => {
+    imagerySelect.addEventListener('change', (event) => {
       selectedImageryMode = event.target.value;
       applyImageryMode();
     });
 
+    map.once('style.load', applyImageryMode);
+    map.on('load', applyImageryMode);
     map.on('moveend', applyImageryMode);
     map.on('zoomend', applyImageryMode);
+    window.setTimeout(() => {
+      if (map.getLayer(globalImageryLayerId)) applyImageryMode();
+    }, 1200);
+
+    function set3DMode(enabled) {
+      map.easeTo({
+        pitch: enabled ? (isMobile ? 48 : 55) : 0,
+        bearing: enabled ? (isMobile ? -12 : -18) : 0,
+        duration: 650
+      });
+      map.setLayoutProperty('building-3d', 'visibility', enabled ? 'visible' : 'none');
+      map.setLayoutProperty('terrain-shade', 'visibility', enabled ? 'visible' : 'none');
+      map.setTerrain(enabled ? {
+        source: 'terrain',
+        exaggeration: isMobile ? 1.35 : 1.5
+      } : null);
+    }
 
     document.getElementById('pitchToggle').addEventListener('click', (event) => {
       const isActive = event.currentTarget.classList.toggle('active');
       event.currentTarget.setAttribute('aria-pressed', String(isActive));
-      map.easeTo({
-        pitch: isActive ? (isMobile ? 48 : 55) : 0,
-        bearing: isActive ? (isMobile ? -12 : -18) : 0,
-        duration: 650
-      });
+      set3DMode(isActive);
     });
 
     fetch('projects.json')

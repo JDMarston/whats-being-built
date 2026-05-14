@@ -20,3 +20,5 @@ Architecture and product decisions made over time.
 - On mobile, use a custom location puck with device heading enabled so the user can orient toward a construction site.
 - On desktop, do not request or display device heading.
 - Show the user's location as a blue location puck/dot, not as a project marker.
+- Keep map provider choices and local aerial imagery layers in a small registry inside the map UI. This keeps project markers, project JSON, and popup behavior separate from the current MapLibre/free-public basemap implementation so a later Google 3D Tiles, Cesium, Mapbox, or other provider upgrade is less invasive.
+- The "newest imagery" behavior means newest known public local aerial layer for the current viewport first, then Esri World Imagery with Esri's metadata as fallback. Esri World Imagery metadata can lag local county services.

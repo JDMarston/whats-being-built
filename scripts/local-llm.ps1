@@ -18,9 +18,22 @@ try {
         -Body $body `
         -ContentType "application/json"
 
-    $response.response
+    if ($null -eq $response) {
+        Write-Host "No response returned from Ollama."
+        exit 1
+    }
+
+    if ([string]::IsNullOrWhiteSpace($response.response)) {
+        Write-Host "Ollama responded, but the model response was empty."
+        Write-Host "Raw response:"
+        $response | ConvertTo-Json -Depth 10
+        exit 1
+    }
+
+    Write-Output $response.response
 }
 catch {
-    Write-Error "Local Ollama request failed. Make sure Ollama is installed, running, and the model is pulled."
+    Write-Host "Local Ollama request failed."
+    Write-Host $_
     exit 1
 }
