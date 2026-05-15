@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/components/headercontrols.tsx","./src/components/imagerybadge.tsx","./src/components/mapview.tsx","./src/components/projectpopup.tsx","./src/lib/imagerylayers.ts","./src/lib/mapprovider.ts","./src/lib/projects.ts","./projects.json"],"version":"5.9.3"}

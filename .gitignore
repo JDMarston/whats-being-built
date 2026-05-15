@@ -1,4 +1,1 @@
-node_modules/
-dist/
-*.tsbuildinfo
-private_database.json
+﻿private_database.json
