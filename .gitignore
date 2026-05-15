@@ -1,1 +1,5 @@
+﻿node_modules/
+dist/
 private_database.json
+.env
+.env.local
