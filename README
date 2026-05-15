@@ -43,7 +43,7 @@ Use canonical machine values for `status`:
 
 Human labels are rendered by the app, so future filters can rely on stable values.
 
-`private_database.json` is for private research notes and extra project details.
+Private research notes should stay local and ignored. Do not commit `private_database.json` or other private working files.
 
 ## Map provider boundary
 

@@ -9,7 +9,7 @@ import {
   localAerialById,
   localAerialImagery
 } from '../lib/imageryLayers';
-import { projectStatusClass, shouldShowProject, type Project } from '../lib/projects';
+import { shouldShowProject, statusClass, type Project } from '../lib/projects';
 import { createMapLibreMap, createMapProvider, type MapViewProvider } from '../lib/mapProvider';
 
 type ImageryBadgeState = {
@@ -457,7 +457,7 @@ export default function MapView({
     visibleProjects.forEach((project) => {
       const markerElement = document.createElement('button');
       markerElement.type = 'button';
-      markerElement.className = `project-marker ${projectStatusClass(project.status)}`;
+      markerElement.className = `project-marker ${statusClass(project.status)}`;
       markerElement.title = project.name;
       markerElement.setAttribute('aria-label', project.name);
       mapView.addProjectMarker(project, markerElement, projectPopupHtml(project));

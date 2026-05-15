@@ -1,4 +1,4 @@
-import { projectStatusLabel, type Project } from '../lib/projects';
+import { statusLabel, type Project } from '../lib/projects';
 
 function escapeHtml(value: unknown): string {
   return String(value || '').replace(/[&<>"']/g, (char) => ({
@@ -24,7 +24,7 @@ export function projectPopupHtml(project: Project): string {
 
   return `
     <h2>${escapeHtml(project.name)}</h2>
-    <span class="popup-status">${escapeHtml(projectStatusLabel(project.status))}</span>
+    <span class="popup-status">${escapeHtml(statusLabel(project.status))}</span>
     ${details ? `<div class="popup-details">${details}</div>` : ''}
     ${project.summary ? `<p>${escapeHtml(project.summary)}</p>` : ''}
     ${sources ? `<p><strong>Sources</strong></p><ul>${sources}</ul>` : ''}
