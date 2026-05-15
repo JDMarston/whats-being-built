@@ -48,12 +48,20 @@ export function normalizeProjectStatus(status: string): ProjectStatus {
   return canonicalStatus;
 }
 
-export function projectStatusLabel(status: ProjectStatus): string {
+export function statusLabel(status: ProjectStatus): string {
   return projectStatuses[status];
 }
 
-export function projectStatusClass(status: ProjectStatus): string {
+export function projectStatusLabel(status: ProjectStatus): string {
+  return statusLabel(status);
+}
+
+export function statusClass(status: ProjectStatus): string {
   return `status-${status.replaceAll('_', '-')}`;
+}
+
+export function projectStatusClass(status: ProjectStatus): string {
+  return statusClass(status);
 }
 
 function completionDateForCutoff(value: string | null | undefined): Date | null {
