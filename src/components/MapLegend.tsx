@@ -15,6 +15,8 @@ type MapLegendProps = {
 };
 
 export default function MapLegend({ isMenuOpen, isLegendOpen, onMenuToggle, onLegendToggle }: MapLegendProps) {
+  const shouldShowLegend = isMenuOpen && isLegendOpen;
+
   return (
     <section className={`map-options ${isMenuOpen ? 'is-open' : ''}`} aria-label="Map options">
       <button
@@ -34,7 +36,12 @@ export default function MapLegend({ isMenuOpen, isLegendOpen, onMenuToggle, onLe
           <span aria-hidden="true">{isLegendOpen ? 'Shown' : 'Hidden'}</span>
         </button>
       </div>
-      <aside id="mapLegend" className={`map-legend ${isLegendOpen ? 'is-open' : ''}`} aria-label="Map legend">
+      <aside
+        id="mapLegend"
+        className={`map-legend ${shouldShowLegend ? 'is-open' : ''}`}
+        aria-label="Map legend"
+        hidden={!shouldShowLegend}
+      >
         <strong>Map legend</strong>
         <ul>
           {legendStatuses.map((status) => (
