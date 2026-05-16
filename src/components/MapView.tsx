@@ -150,6 +150,27 @@ export default function MapView({
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
     map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
 
+    let hasUserToggledAttribution = false;
+
+    function closeAutomaticAttribution() {
+      if (hasUserToggledAttribution) return;
+      const attribution = mapContainer.querySelector('.maplibregl-ctrl-attrib') as HTMLElement | null;
+      attribution?.classList.remove('maplibregl-compact-show');
+    }
+
+    function trackAttributionToggle() {
+      const attributionButton = mapContainer.querySelector('.maplibregl-ctrl-attrib-button') as HTMLElement | null;
+      attributionButton?.addEventListener('click', () => {
+        hasUserToggledAttribution = true;
+      }, { once: true });
+    }
+
+    closeAutomaticAttribution();
+    trackAttributionToggle();
+    map.on('styledata', closeAutomaticAttribution);
+    map.on('sourcedata', closeAutomaticAttribution);
+    map.on('resize', closeAutomaticAttribution);
+
     const mapView = createMapProvider(map, isMobile);
     mapViewRef.current = mapView;
 
@@ -495,6 +516,9 @@ export default function MapView({
       window.removeEventListener('resize', updateFloatingMapOptionsAnchor);
       window.removeEventListener('orientationchange', updateFloatingMapOptionsAnchor);
       document.documentElement.style.removeProperty('--map-controls-bottom');
+      map.off('styledata', closeAutomaticAttribution);
+      map.off('sourcedata', closeAutomaticAttribution);
+      map.off('resize', closeAutomaticAttribution);
       map.remove();
       mapRef.current = null;
       mapViewRef.current = null;
