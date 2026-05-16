@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import HeaderControls, { type ImageryOption } from './components/HeaderControls';
 import ImageryBadge from './components/ImageryBadge';
+import MapLegend from './components/MapLegend';
 import MapView from './components/MapView';
 import type { ImageryMode } from './lib/imageryLayers';
 import { projects } from './lib/projects';
@@ -40,6 +41,7 @@ export default function App() {
         onImageryNoteChange={setImageryNote}
         onImageryBadgeChange={setImageryBadge}
       />
+      <MapLegend />
       <ImageryBadge dateText={imageryBadge.dateText} sourceText={imageryBadge.sourceText} />
     </div>
   );
