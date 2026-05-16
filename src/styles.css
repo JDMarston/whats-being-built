@@ -144,6 +144,55 @@ button.active {
   line-height: 1.25;
 }
 
+.map-legend {
+  position: absolute;
+  top: 88px;
+  left: max(12px, env(safe-area-inset-left));
+  z-index: 1;
+  width: max-content;
+  max-width: min(240px, calc(100vw - 24px));
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.map-legend strong {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 0.8rem;
+  line-height: 1.2;
+}
+
+.map-legend ul {
+  display: grid;
+  gap: 6px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.map-legend li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.2;
+}
+
+.legend-dot {
+  flex: 0 0 auto;
+  width: 13px;
+  height: 13px;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  background: var(--accent-strong);
+  box-shadow: 0 2px 7px rgba(0, 0, 0, 0.3);
+}
+
 .project-marker {
   display: grid;
   place-items: center;
@@ -169,7 +218,27 @@ button.active {
   background: #4fb4ff;
 }
 
+.project-marker.status-approved {
+  background: #b879ff;
+}
+
 .project-marker.status-recently-completed {
+  background: #42c47c;
+}
+
+.legend-dot.status-proposed {
+  background: #4fb4ff;
+}
+
+.legend-dot.status-approved {
+  background: #b879ff;
+}
+
+.legend-dot.status-under-construction {
+  background: var(--accent-strong);
+}
+
+.legend-dot.status-recently-completed {
   background: #42c47c;
 }
 
@@ -393,6 +462,16 @@ button.active {
 
   .maplibregl-ctrl-top-right {
     top: 126px;
+  }
+
+  .map-legend {
+    top: 142px;
+    max-width: min(210px, calc(100vw - 82px));
+    padding: 9px 10px;
+  }
+
+  .map-legend li {
+    font-size: 0.72rem;
   }
 
   .maplibregl-ctrl button {
