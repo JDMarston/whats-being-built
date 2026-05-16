@@ -183,7 +183,7 @@ button.active {
   line-height: 1.2;
 }
 
-.legend-toggle {
+.map-options-toggle {
   position: absolute;
   top: 88px;
   left: max(12px, env(safe-area-inset-left));
@@ -193,6 +193,49 @@ button.active {
   border-radius: 999px;
   background: var(--panel-strong);
   box-shadow: var(--shadow);
+}
+.map-options-panel {
+  position: absolute;
+  left: max(12px, env(safe-area-inset-left));
+  bottom: max(128px, calc(env(safe-area-inset-bottom) + 128px));
+  z-index: 4;
+  display: grid;
+  gap: 8px;
+  width: min(230px, calc(100vw - 24px));
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--text);
+  background: var(--panel-strong);
+  box-shadow: var(--shadow);
+}
+
+.map-options-panel[hidden] {
+  display: none;
+}
+
+.map-options-panel strong {
+  font-size: 0.78rem;
+}
+
+.map-option-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  min-height: 36px;
+  padding: 0 10px;
+  border-radius: 8px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 0.78rem;
+}
+
+.map-option-row span:last-child {
+  color: var(--accent);
+  font-size: 0.7rem;
+  font-weight: 800;
 }
 
 .legend-dot {
@@ -771,19 +814,25 @@ button.active {
     max-height: min(46vh, 390px);
   }
 
-  .legend-toggle {
+  .map-options-toggle {
     top: auto;
     bottom: max(82px, calc(env(safe-area-inset-bottom) + 82px));
     left: max(12px, env(safe-area-inset-left));
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 0;
-    min-height: 34px;
-    padding: 0 10px;
-    border-radius: 999px;
-    font-size: 0.72rem;
+    min-width: 38px;
+    width: 38px;
+    min-height: 38px;
+    height: 38px;
+    padding: 0;
+    border-radius: 50%;
+    font-size: 1.08rem;
     line-height: 1;
+  }
+
+  .map-options-panel {
+    bottom: max(128px, calc(env(safe-area-inset-bottom) + 128px));
   }
 
   .project-bottom-sheet {
