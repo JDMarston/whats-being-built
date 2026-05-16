@@ -142,6 +142,7 @@ export default function MapView({
   useEffect(() => {
     const container = mapContainerRef.current;
     if (!container || mapRef.current) return;
+    const mapContainer = container;
 
     const isMobile = window.matchMedia('(pointer: coarse), (max-width: 720px)').matches;
     const map = createMapLibreMap(container, isMobile);
@@ -451,8 +452,21 @@ export default function MapView({
 
     applyImageryModeRef.current = applyImageryMode;
     mapView.addLocateControl(startLocationTracking, locateButtons);
+
+    function updateFloatingMapOptionsAnchor() {
+      if (!isMobile) return;
+      const controlStack = mapContainer.querySelector('.maplibregl-ctrl-top-right') as HTMLElement | null;
+      if (!controlStack) return;
+      const controlBounds = controlStack.getBoundingClientRect();
+      document.documentElement.style.setProperty('--map-controls-bottom', `${Math.ceil(controlBounds.bottom + 12)}px`);
+    }
+
+    window.addEventListener('resize', updateFloatingMapOptionsAnchor);
+    window.addEventListener('orientationchange', updateFloatingMapOptionsAnchor);
+
     locationPromptButton?.addEventListener('click', () => startLocationTracking(locationPromptButton));
     mapView.onReady(() => {
+      updateFloatingMapOptionsAnchor();
       showLocationPrompt();
       applyImageryMode();
     });
@@ -478,6 +492,9 @@ export default function MapView({
         navigator.geolocation.clearWatch(locationWatchId);
       }
       headingListeners.forEach(([eventName, listener]) => window.removeEventListener(eventName, listener));
+      window.removeEventListener('resize', updateFloatingMapOptionsAnchor);
+      window.removeEventListener('orientationchange', updateFloatingMapOptionsAnchor);
+      document.documentElement.style.removeProperty('--map-controls-bottom');
       map.remove();
       mapRef.current = null;
       mapViewRef.current = null;
