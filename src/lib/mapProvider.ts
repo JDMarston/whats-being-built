@@ -15,7 +15,8 @@ export type MapViewProvider = {
   whenLayerReady: (layerId: string, callback: () => void) => void;
   setImageryVisibility: (nextMode: string, showStreetOverlay: boolean) => void;
   set3DMode: (enabled: boolean) => void;
-  addProjectMarker: (project: Project, markerElement: HTMLElement, popupMarkup: string) => maplibregl.Marker;
+  addProjectMarker: (project: Project, markerElement: HTMLElement) => maplibregl.Marker;
+  centerOnProject: (lngLat: [number, number]) => void;
   setUserLocationMarker: (markerElement: HTMLElement, lngLat: [number, number]) => void;
   centerOnLocation: (lngLat: [number, number], accuracyMeters?: number) => void;
   addLocateControl: (startTracking: (button: HTMLButtonElement) => void, locateButtons: Set<HTMLButtonElement>) => void;
@@ -242,19 +243,21 @@ export function createMapProvider(mapInstance: Map, isMobile: boolean): MapViewP
         exaggeration: isMobile ? 1.35 : 1.5
       } : null);
     },
-    addProjectMarker(project, markerElement, popupMarkup) {
+    addProjectMarker(project, markerElement) {
       return new maplibregl.Marker({
         element: markerElement,
         anchor: 'bottom'
       })
         .setLngLat([project.lng as number, project.lat as number])
-        .setPopup(new maplibregl.Popup({
-          offset: 24,
-          maxWidth: 'none',
-          className: 'project-popup',
-          focusAfterOpen: false
-        }).setHTML(popupMarkup))
         .addTo(mapInstance);
+    },
+    centerOnProject(lngLat) {
+      mapInstance.easeTo({
+        center: lngLat,
+        zoom: Math.max(mapInstance.getZoom(), isMobile ? 15.2 : 15.5),
+        duration: 650,
+        padding: isMobile ? { top: 150, bottom: 260, left: 24, right: 24 } : { top: 110, bottom: 180, left: 320, right: 24 }
+      });
     },
     setUserLocationMarker(markerElement, lngLat) {
       if (!userLocationMarker) {
