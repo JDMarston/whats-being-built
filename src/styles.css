@@ -781,7 +781,7 @@ button.active {
   }
 
   .map-legend {
-    top: 520px;
+    top: 650px;
     right: max(12px, env(safe-area-inset-right));
     bottom: auto;
     left: auto;
@@ -816,7 +816,9 @@ button.active {
   }
 
   .map-options-toggle {
-    top: 390px;
+    /* The MapLibre controls are positioned inside the map row, below the header;
+       keep this app-level button lower so it clears the right-side locate control. */
+    top: 520px;
     right: max(12px, env(safe-area-inset-right));
     bottom: auto;
     left: auto;
@@ -834,7 +836,7 @@ button.active {
   }
 
   .map-options-panel {
-    top: 436px;
+    top: 566px;
     right: max(12px, env(safe-area-inset-right));
     bottom: auto;
     left: auto;
