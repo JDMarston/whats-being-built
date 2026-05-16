@@ -738,7 +738,8 @@ button.active {
   }
 
   .map-legend {
-    top: 194px;
+    top: auto;
+    bottom: max(128px, calc(env(safe-area-inset-bottom) + 128px));
     left: max(12px, env(safe-area-inset-left));
     display: none;
     max-width: min(230px, calc(100vw - 24px));
@@ -771,12 +772,18 @@ button.active {
   }
 
   .legend-toggle {
-    top: 142px;
+    top: auto;
+    bottom: max(82px, calc(env(safe-area-inset-bottom) + 82px));
     left: max(12px, env(safe-area-inset-left));
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0 13px;
+    min-width: 0;
+    min-height: 34px;
+    padding: 0 10px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    line-height: 1;
   }
 
   .project-bottom-sheet {
