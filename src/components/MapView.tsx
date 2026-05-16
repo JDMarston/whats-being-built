@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
 import maplibregl from 'maplibre-gl';
-import { projectPopupHtml } from './ProjectPopup';
 import type { ImageryMode, LocalAerialLayer } from '../lib/imageryLayers';
 import {
   globalImageryLayerId,
@@ -19,8 +18,10 @@ type ImageryBadgeState = {
 
 type MapViewProps = {
   projects: Project[];
+  selectedProject: Project | null;
   selectedImageryMode: ImageryMode;
   is3DEnabled: boolean;
+  onProjectSelect: (project: Project) => void;
   onProjectCountChange: (text: string) => void;
   onImageryNoteChange: (text: string) => void;
   onImageryBadgeChange: (badge: ImageryBadgeState) => void;
@@ -98,8 +99,10 @@ function headingFromDeviceEvent(event: DeviceOrientationEvent): number | null {
 
 export default function MapView({
   projects,
+  selectedProject,
   selectedImageryMode,
   is3DEnabled,
+  onProjectSelect,
   onProjectCountChange,
   onImageryNoteChange,
   onImageryBadgeChange
@@ -130,6 +133,11 @@ export default function MapView({
   useEffect(() => {
     mapViewRef.current?.set3DMode(is3DEnabled);
   }, [is3DEnabled]);
+
+  useEffect(() => {
+    if (!selectedProject || !selectedProject.lat || !selectedProject.lng) return;
+    mapViewRef.current?.centerOnProject([selectedProject.lng, selectedProject.lat]);
+  }, [selectedProject]);
 
   useEffect(() => {
     const container = mapContainerRef.current;
@@ -460,7 +468,8 @@ export default function MapView({
       markerElement.className = `project-marker ${statusClass(project.status)}`;
       markerElement.title = project.name;
       markerElement.setAttribute('aria-label', project.name);
-      mapView.addProjectMarker(project, markerElement, projectPopupHtml(project));
+      markerElement.addEventListener('click', () => onProjectSelect(project));
+      mapView.addProjectMarker(project, markerElement);
     });
 
     return () => {
@@ -474,7 +483,7 @@ export default function MapView({
       mapViewRef.current = null;
       applyImageryModeRef.current = null;
     };
-  }, [onImageryBadgeChange, onImageryNoteChange, visibleProjects]);
+  }, [onImageryBadgeChange, onImageryNoteChange, onProjectSelect, visibleProjects]);
 
   return (
     <>
