@@ -781,9 +781,10 @@ button.active {
   }
 
   .map-legend {
-    top: auto;
-    bottom: max(128px, calc(env(safe-area-inset-bottom) + 128px));
-    left: max(12px, env(safe-area-inset-left));
+    top: 410px;
+    right: max(12px, env(safe-area-inset-right));
+    bottom: auto;
+    left: auto;
     display: none;
     max-width: min(230px, calc(100vw - 24px));
     padding: 9px 10px;
@@ -815,9 +816,10 @@ button.active {
   }
 
   .map-options-toggle {
-    top: auto;
-    bottom: max(82px, calc(env(safe-area-inset-bottom) + 82px));
-    left: max(12px, env(safe-area-inset-left));
+    top: 274px;
+    right: max(12px, env(safe-area-inset-right));
+    bottom: auto;
+    left: auto;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -832,7 +834,10 @@ button.active {
   }
 
   .map-options-panel {
-    bottom: max(128px, calc(env(safe-area-inset-bottom) + 128px));
+    top: 320px;
+    right: max(12px, env(safe-area-inset-right));
+    bottom: auto;
+    left: auto;
   }
 
   .project-bottom-sheet {
