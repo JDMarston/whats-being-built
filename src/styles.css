@@ -781,7 +781,7 @@ button.active {
   }
 
   .map-legend {
-    top: 410px;
+    top: 448px;
     right: max(12px, env(safe-area-inset-right));
     bottom: auto;
     left: auto;
@@ -816,7 +816,7 @@ button.active {
   }
 
   .map-options-toggle {
-    top: 274px;
+    top: 318px;
     right: max(12px, env(safe-area-inset-right));
     bottom: auto;
     left: auto;
@@ -834,7 +834,7 @@ button.active {
   }
 
   .map-options-panel {
-    top: 320px;
+    top: 364px;
     right: max(12px, env(safe-area-inset-right));
     bottom: auto;
     left: auto;
