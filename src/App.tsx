@@ -12,6 +12,7 @@ export default function App() {
   const [selectedImageryMode, setSelectedImageryMode] = useState<ImageryMode>('satellite');
   const [is3DEnabled, setIs3DEnabled] = useState(true);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [isLegendOpen, setIsLegendOpen] = useState(false);
   const [projectCountText, setProjectCountText] = useState('Loading projects');
   const [imageryNote, setImageryNote] = useState('Newest aerial imagery when available');
   const [imageryBadge, setImageryBadge] = useState({
@@ -56,7 +57,7 @@ export default function App() {
         selectedProjectId={selectedProject?.id}
         onProjectSelect={setSelectedProject}
       />
-      <MapLegend />
+      <MapLegend isOpen={isLegendOpen} onToggle={() => setIsLegendOpen((current) => !current)} />
       <ImageryBadge dateText={imageryBadge.dateText} sourceText={imageryBadge.sourceText} />
       <ProjectBottomSheet project={selectedProject} onClose={() => setSelectedProject(null)} />
     </div>
