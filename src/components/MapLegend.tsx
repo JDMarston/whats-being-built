@@ -8,31 +8,33 @@ const legendStatuses: ProjectStatus[] = [
 ];
 
 type MapLegendProps = {
-  isOpen: boolean;
-  onToggle: () => void;
+  isMenuOpen: boolean;
+  isLegendOpen: boolean;
+  onMenuToggle: () => void;
+  onLegendToggle: () => void;
 };
 
-export default function MapLegend({ isOpen, onToggle }: MapLegendProps) {
+export default function MapLegend({ isMenuOpen, isLegendOpen, onMenuToggle, onLegendToggle }: MapLegendProps) {
   return (
-    <section className={`map-options ${isOpen ? 'is-open' : ''}`} aria-label="Map options">
+    <section className={`map-options ${isMenuOpen ? 'is-open' : ''}`} aria-label="Map options">
       <button
         type="button"
         className="map-options-toggle"
         aria-label="Map options"
-        aria-expanded={isOpen}
+        aria-expanded={isMenuOpen}
         aria-controls="mapOptionsPanel"
-        onClick={onToggle}
+        onClick={onMenuToggle}
       >
         <span aria-hidden="true">☰</span>
       </button>
-      <div id="mapOptionsPanel" className="map-options-panel" hidden={!isOpen}>
+      <div id="mapOptionsPanel" className="map-options-panel" hidden={!isMenuOpen}>
         <strong>Map options</strong>
-        <button type="button" className="map-option-row active" onClick={onToggle}>
+        <button type="button" className={`map-option-row ${isLegendOpen ? 'active' : ''}`} onClick={onLegendToggle}>
           <span>Legend</span>
-          <span aria-hidden="true">Shown</span>
+          <span aria-hidden="true">{isLegendOpen ? 'Shown' : 'Hidden'}</span>
         </button>
       </div>
-      <aside id="mapLegend" className={`map-legend ${isOpen ? 'is-open' : ''}`} aria-label="Map legend">
+      <aside id="mapLegend" className={`map-legend ${isLegendOpen ? 'is-open' : ''}`} aria-label="Map legend">
         <strong>Map legend</strong>
         <ul>
           {legendStatuses.map((status) => (
