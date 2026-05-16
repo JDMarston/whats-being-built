@@ -786,13 +786,19 @@ button.active {
     bottom: auto;
     left: auto;
     display: none;
-    max-width: min(230px, calc(100vw - 24px));
+    width: min(178px, calc(100vw - 24px));
+    max-width: min(178px, calc(100vw - 24px));
     padding: 9px 10px;
     z-index: 4;
   }
 
   .map-legend.is-open {
     display: block;
+  }
+
+  .map-options.is-open .map-legend.is-open {
+    top: calc(var(--map-controls-bottom, 520px) + 46px);
+    right: calc(max(12px, env(safe-area-inset-right)) + min(178px, calc(100vw - 24px)) + 8px);
   }
 
   .map-legend li {
@@ -838,6 +844,7 @@ button.active {
     right: max(12px, env(safe-area-inset-right));
     bottom: auto;
     left: auto;
+    width: min(178px, calc(100vw - 24px));
   }
 
   .project-bottom-sheet {
