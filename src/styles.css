@@ -32,8 +32,7 @@ body {
 }
 
 .app-shell {
-  display: grid;
-  grid-template-rows: auto 1fr;
+  position: relative;
   width: 100%;
   height: 100vh;
   height: 100dvh;
@@ -215,6 +214,24 @@ button.active {
 }
 
 .map-options-panel strong {
+  font-size: 0.78rem;
+}
+
+.map-option-field {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.map-option-field select {
+  width: 100%;
+  max-width: none;
+  min-height: 36px;
+  border-radius: 8px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.08);
   font-size: 0.78rem;
 }
 
@@ -413,7 +430,7 @@ button.active {
 }
 
 .maplibregl-ctrl-top-right {
-  top: 76px;
+  top: 118px;
 }
 
 .maplibregl-ctrl-group {
@@ -502,7 +519,7 @@ button.active {
 
 .project-search-panel {
   position: absolute;
-  top: 88px;
+  top: max(12px, env(safe-area-inset-top));
   right: max(12px, env(safe-area-inset-right));
   z-index: 3;
   width: min(360px, calc(100vw - 24px));
@@ -872,7 +889,7 @@ button.active {
 
 
   .project-search-panel {
-    top: 142px;
+    top: max(12px, env(safe-area-inset-top));
     right: max(12px, env(safe-area-inset-right));
     left: max(12px, env(safe-area-inset-left));
     width: auto;

@@ -27,7 +27,7 @@ export default function HeaderControls({
   return (
     <header>
       <div className="brand">
-        <h1>What's Being Built in St. Petersburg</h1>
+        <h1>What's Being Built</h1>
         <div className="meta">
           <span>{projectCountText}</span>
           <span>{imageryNote}</span>

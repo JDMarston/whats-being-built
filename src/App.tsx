@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import HeaderControls, { type ImageryOption } from './components/HeaderControls';
+import type { ImageryOption } from './components/MapLegend';
 import ImageryBadge from './components/ImageryBadge';
 import MapLegend from './components/MapLegend';
 import MapView from './components/MapView';
@@ -36,21 +36,18 @@ export default function App() {
 
   const imageryOptions = useMemo<ImageryOption[]>(() => [
     { value: 'satellite', label: 'Satellite' },
-    { value: 'satellite-streets', label: 'Satellite + street map' },
+    { value: 'satellite-streets', label: 'Satellite + streets' },
     { value: 'street-map', label: 'Street map' }
   ], []);
 
+  useEffect(() => {
+    if (!selectedProject) return;
+    if (visibleProjects.some((project) => project.id === selectedProject.id)) return;
+    setSelectedProject(null);
+  }, [selectedProject, visibleProjects]);
+
   return (
     <div className={`app-shell ${selectedProject ? 'has-selected-project' : ''}`}>
-      <HeaderControls
-        projectCountText={projectCountText}
-        imageryNote={imageryNote}
-        imageryOptions={imageryOptions}
-        selectedImageryMode={selectedImageryMode}
-        is3DEnabled={is3DEnabled}
-        onImageryChange={setSelectedImageryMode}
-        on3DToggle={() => setIs3DEnabled((current) => !current)}
-      />
       <MapView
         projects={visibleProjects}
         selectedProject={selectedProject}
@@ -70,8 +67,13 @@ export default function App() {
         onProjectSelect={setSelectedProject}
       />
       <MapLegend
+        imageryOptions={imageryOptions}
+        selectedImageryMode={selectedImageryMode}
+        is3DEnabled={is3DEnabled}
         isMenuOpen={isMapOptionsOpen}
         isLegendOpen={isLegendOpen}
+        onImageryChange={setSelectedImageryMode}
+        on3DToggle={() => setIs3DEnabled((current) => !current)}
         onMenuToggle={() => setIsMapOptionsOpen((current) => !current)}
         onLegendToggle={() => setIsLegendOpen((current) => !current)}
       />
