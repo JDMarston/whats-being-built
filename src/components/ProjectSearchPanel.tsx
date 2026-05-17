@@ -1,15 +1,40 @@
 import { useMemo, useState } from 'react';
-import { statusClass, statusLabel, type Project } from '../lib/projects';
+import { projectStatuses, statusClass, statusLabel, type Project, type ProjectStatus } from '../lib/projects';
+
+type StatusFilter = ProjectStatus | 'all';
 
 type ProjectSearchPanelProps = {
   projects: Project[];
+  allProjects: Project[];
   selectedProjectId?: string;
+  selectedStatus: StatusFilter;
+  onStatusChange: (status: StatusFilter) => void;
   onProjectSelect: (project: Project) => void;
 };
 
-export default function ProjectSearchPanel({ projects, selectedProjectId, onProjectSelect }: ProjectSearchPanelProps) {
+const statusFilterOptions: Array<{ value: StatusFilter; label: string }> = [
+  { value: 'all', label: 'All projects' },
+  ...Object.entries(projectStatuses).map(([value, label]) => ({ value: value as ProjectStatus, label }))
+];
+
+export default function ProjectSearchPanel({
+  projects,
+  allProjects,
+  selectedProjectId,
+  selectedStatus,
+  onStatusChange,
+  onProjectSelect
+}: ProjectSearchPanelProps) {
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
+
+  const statusCounts = useMemo(() => {
+    const counts = new Map<StatusFilter, number>([['all', allProjects.length]]);
+    allProjects.forEach((project) => {
+      counts.set(project.status, (counts.get(project.status) || 0) + 1);
+    });
+    return counts;
+  }, [allProjects]);
 
   const filteredProjects = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -47,6 +72,23 @@ export default function ProjectSearchPanel({ projects, selectedProjectId, onProj
         <button type="button" className="list-toggle" aria-expanded={isOpen} onClick={() => setIsOpen((current) => !current)}>
           List
         </button>
+      </div>
+      <div className="status-filter" aria-label="Filter projects by status">
+        {statusFilterOptions.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            className={selectedStatus === option.value ? 'active' : undefined}
+            aria-pressed={selectedStatus === option.value}
+            onClick={() => {
+              onStatusChange(option.value);
+              setIsOpen(true);
+            }}
+          >
+            <span>{option.label}</span>
+            <span aria-hidden="true">{statusCounts.get(option.value) || 0}</span>
+          </button>
+        ))}
       </div>
       <div className="project-list" hidden={!isOpen}>
         <div className="project-list-meta">

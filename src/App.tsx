@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import HeaderControls, { type ImageryOption } from './components/HeaderControls';
 import ImageryBadge from './components/ImageryBadge';
 import MapLegend from './components/MapLegend';
@@ -6,7 +6,7 @@ import MapView from './components/MapView';
 import ProjectBottomSheet from './components/ProjectBottomSheet';
 import ProjectSearchPanel from './components/ProjectSearchPanel';
 import type { ImageryMode } from './lib/imageryLayers';
-import { projects, shouldShowProject, type Project } from './lib/projects';
+import { projects, shouldShowProject, type Project, type ProjectStatus } from './lib/projects';
 
 export default function App() {
   const [selectedImageryMode, setSelectedImageryMode] = useState<ImageryMode>('satellite');
@@ -14,6 +14,7 @@ export default function App() {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isMapOptionsOpen, setIsMapOptionsOpen] = useState(false);
   const [isLegendOpen, setIsLegendOpen] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<ProjectStatus | 'all'>('all');
   const [projectCountText, setProjectCountText] = useState('Loading projects');
   const [imageryNote, setImageryNote] = useState('Newest aerial imagery when available');
   const [imageryBadge, setImageryBadge] = useState({
@@ -21,9 +22,16 @@ export default function App() {
     sourceText: 'Checking the current map view'
   });
 
-  const visibleProjects = useMemo(
+  const activeProjects = useMemo(
     () => projects.filter(shouldShowProject).filter((project) => project.lat && project.lng),
     []
+  );
+
+  const visibleProjects = useMemo(
+    () => selectedStatus === 'all'
+      ? activeProjects
+      : activeProjects.filter((project) => project.status === selectedStatus),
+    [activeProjects, selectedStatus]
   );
 
   const imageryOptions = useMemo<ImageryOption[]>(() => [
@@ -55,7 +63,10 @@ export default function App() {
       />
       <ProjectSearchPanel
         projects={visibleProjects}
+        allProjects={activeProjects}
         selectedProjectId={selectedProject?.id}
+        selectedStatus={selectedStatus}
+        onStatusChange={setSelectedStatus}
         onProjectSelect={setSelectedProject}
       />
       <MapLegend

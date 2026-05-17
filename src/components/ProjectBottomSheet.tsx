@@ -8,6 +8,8 @@ type ProjectBottomSheetProps = {
 export default function ProjectBottomSheet({ project, onClose }: ProjectBottomSheetProps) {
   if (!project) return null;
 
+  const sourceCountText = `${project.sources?.length || 0} source${project.sources?.length === 1 ? '' : 's'}`;
+
   return (
     <section className="project-bottom-sheet" aria-label="Selected project details">
       <div className="sheet-handle" aria-hidden="true" />
@@ -23,15 +25,24 @@ export default function ProjectBottomSheet({ project, onClose }: ProjectBottomSh
         {project.expected_open ? <span><strong>Expected:</strong> {project.expected_open}</span> : null}
         {project.completed_at ? <span><strong>Completed:</strong> {project.completed_at}</span> : null}
         {project.last_verified ? <span><strong>Verified:</strong> {project.last_verified}</span> : null}
+        <span><strong>Sources:</strong> {sourceCountText}</span>
       </div>
-      <p>{project.summary}</p>
+      <p className="sheet-summary">{project.summary}</p>
       {project.sources?.length ? (
-        <div className="sheet-actions">
-          {project.sources.slice(0, 2).map((source) => (
-            <a key={source.url} href={source.url} target="_blank" rel="noopener noreferrer">
-              {source.label}
-            </a>
-          ))}
+        <div className="sheet-sources">
+          <div className="sheet-section-heading">
+            <strong>Sources</strong>
+            <span>{sourceCountText}</span>
+          </div>
+          <ul className="sheet-source-list">
+            {project.sources.map((source) => (
+              <li key={source.url}>
+                <a href={source.url} target="_blank" rel="noopener noreferrer">
+                  {source.label}
+                </a>
+              </li>
+            ))}
+          </ul>
         </div>
       ) : null}
     </section>

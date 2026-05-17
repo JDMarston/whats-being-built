@@ -145,6 +145,7 @@ export default function MapView({
     const mapContainer = container;
 
     const isMobile = window.matchMedia('(pointer: coarse), (max-width: 720px)').matches;
+    const mapControlsBottomOffset = 12;
     const map = createMapLibreMap(container, isMobile);
     mapRef.current = map;
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
@@ -479,7 +480,7 @@ export default function MapView({
       const controlStack = mapContainer.querySelector('.maplibregl-ctrl-top-right') as HTMLElement | null;
       if (!controlStack) return;
       const controlBounds = controlStack.getBoundingClientRect();
-      document.documentElement.style.setProperty('--map-controls-bottom', `${Math.ceil(controlBounds.bottom + 12)}px`);
+      document.documentElement.style.setProperty('--map-controls-bottom', `${Math.ceil(controlBounds.bottom + mapControlsBottomOffset)}px`);
     }
 
     window.addEventListener('resize', updateFloatingMapOptionsAnchor);
