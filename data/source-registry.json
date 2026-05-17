@@ -1,0 +1,35 @@
+[
+  {
+    "id": "st-pete-rising-under-construction",
+    "name": "St. Pete Rising - Under Construction",
+    "kind": "public_page",
+    "url": "https://stpeterising.com/under-construction-projects",
+    "area": "St. Petersburg, FL",
+    "enabled": true,
+    "scrapePolicy": "respect_robots_and_terms",
+    "refreshCadence": "weekly",
+    "notes": "Public project listing page. Ingest only project names, project detail links, image URLs, and short generated staging summaries; do not copy article bodies."
+  },
+  {
+    "id": "st-pete-catalyst-development-news",
+    "name": "St. Pete Catalyst development news",
+    "kind": "rss",
+    "url": "https://stpetecatalyst.com/category/development/feed/",
+    "area": "St. Petersburg, FL",
+    "enabled": false,
+    "scrapePolicy": "respect_robots_and_terms",
+    "refreshCadence": "weekly",
+    "notes": "Candidate future source for article links and short summaries. Keep disabled until an RSS adapter is added."
+  },
+  {
+    "id": "st-pete-public-meetings-agendas",
+    "name": "City of St. Petersburg public meetings and agendas",
+    "kind": "agenda",
+    "url": "https://www.stpete.org/government/meetings_and_agendas.php",
+    "area": "St. Petersburg, FL",
+    "enabled": false,
+    "scrapePolicy": "respect_robots_and_terms",
+    "refreshCadence": "weekly",
+    "notes": "Candidate future source for development-review agenda items; needs a dedicated adapter so agenda text is summarized rather than copied."
+  }
+]
