@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { ImageryOption } from './components/MapLegend';
+import DataReviewDashboard from './components/DataReviewDashboard';
 import FieldCapturePanel from './components/FieldCapturePanel';
 import ImageryBadge from './components/ImageryBadge';
 import MapLegend from './components/MapLegend';
@@ -27,6 +28,12 @@ function saveFieldCaptureProjects(nextProjects: Project[]) {
 }
 
 export default function App() {
+  const isReviewDashboardRoute = window.location.pathname === '/review';
+
+  if (isReviewDashboardRoute) {
+    return <DataReviewDashboard />;
+  }
+
   const [selectedImageryMode, setSelectedImageryMode] = useState<ImageryMode>('satellite');
   const [is3DEnabled, setIs3DEnabled] = useState(true);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
@@ -101,18 +108,16 @@ export default function App() {
         onImageryBadgeChange={setImageryBadge}
       />
       <section className="site-intro-card" aria-label="About What's Being Built">
-        <div className="intro-kicker">hobby project · Live on Netlify</div>
+        <div className="intro-kicker">live project map</div>
         <h1>What’s Being Built?</h1>
-        <p>
-          A map for the exact feeling of walking past a crane and thinking: I hate not knowing
-          what is going up around me.
-        </p>
+        <p>Find nearby construction, open the source, and check the review queue when the data looks thin.</p>
         <div className="intro-stat-grid" aria-label="Current map stats">
           <span><strong>{projectStats.total}</strong><small>mapped projects</small></span>
           <span><strong>{projectStats.underConstruction}</strong><small>under construction</small></span>
           <span><strong>{projectStats.sourcedProjects}</strong><small>with sources</small></span>
         </div>
         <p className="intro-note">Tap a pin, search an address, or use field mode when you’re standing near a mystery site.</p>
+        <a className="intro-review-link" href="/review">Review staged data</a>
       </section>
       <ProjectSearchPanel
         projects={visibleProjects}

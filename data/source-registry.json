@@ -31,5 +31,27 @@
     "scrapePolicy": "respect_robots_and_terms",
     "refreshCadence": "weekly",
     "notes": "Candidate future source for development-review agenda items; needs a dedicated adapter so agenda text is summarized rather than copied."
+  },
+  {
+    "id": "st-pete-accela-permits",
+    "name": "City of St. Petersburg permit search",
+    "kind": "open_data",
+    "url": "https://aca-prod.accela.com/STPETE/Default.aspx",
+    "area": "St. Petersburg, FL",
+    "enabled": false,
+    "scrapePolicy": "respect_robots_and_terms",
+    "refreshCadence": "weekly",
+    "notes": "Candidate permit source for address-level construction clues. Keep disabled until an adapter can query public records without paid map/geocode dependencies."
+  },
+  {
+    "id": "pinellas-property-appraiser",
+    "name": "Pinellas County Property Appraiser",
+    "kind": "public_page",
+    "url": "https://www.pcpao.gov/",
+    "area": "Pinellas County, FL",
+    "enabled": false,
+    "scrapePolicy": "respect_robots_and_terms",
+    "refreshCadence": "monthly",
+    "notes": "Candidate parcel/owner/developer cross-check source. Use for manual review and future enrichment, not bulk scraping, unless terms allow it."
   }
 ]
