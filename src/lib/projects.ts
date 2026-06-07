@@ -27,6 +27,9 @@ export type Project = {
   last_verified: string | null;
   summary: string;
   sources: ProjectSource[];
+  photoDataUrl?: string | null;
+  capturedAt?: string | null;
+  locationAccuracyMeters?: number | null;
 };
 
 const statusAliases: Record<string, ProjectStatus> = {

@@ -9,7 +9,8 @@
     "check:ui": "node scripts/check-ui-source.mjs",
     "check:data": "node scripts/check-data-ingestion.mjs",
     "ingest:sources": "node scripts/ingest-sources.mjs",
-    "preview": "vite preview --host 0.0.0.0"
+    "preview": "vite preview --host 0.0.0.0",
+    "review:candidates": "node scripts/review-candidates.mjs"
   },
   "dependencies": {
     "maplibre-gl": "^5.24.0",

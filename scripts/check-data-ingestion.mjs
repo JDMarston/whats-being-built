@@ -3,7 +3,8 @@ import { existsSync, readFileSync } from 'node:fs';
 const requiredFiles = [
   'data/source-registry.json',
   'data/staged-project-candidates.json',
-  'scripts/ingest-sources.mjs'
+  'scripts/ingest-sources.mjs',
+  'scripts/review-candidates.mjs'
 ];
 
 const checks = [];
@@ -46,7 +47,19 @@ const requiredCandidateFields = [
 
 checks.push(['staged candidates has at least 5 entries', Array.isArray(candidates) && candidates.length >= 5]);
 checks.push(['address-like project names are copied into candidate address for review', candidates.filter((candidate) => /\d+\s+/.test(candidate.name)).every((candidate) => candidate.address === `${candidate.name}, St. Petersburg, FL`)]);
-checks.push(['staged candidates require manual review before publishing', candidates.every((candidate) => candidate.review_status === 'needs_review')]);
+const validReviewStatuses = new Set(['needs_review', 'promoted', 'rejected', 'duplicate']);
+checks.push(['staged candidates use valid review statuses', candidates.every((candidate) => validReviewStatuses.has(candidate.review_status))]);
+checks.push(['promoted staged candidates include map coordinates and promoted project id', candidates
+  .filter((candidate) => candidate.review_status === 'promoted')
+  .every((candidate) => (
+    typeof candidate.lat === 'number' &&
+    typeof candidate.lng === 'number' &&
+    typeof candidate.promoted_project_id === 'string' &&
+    candidate.promoted_project_id.length > 0
+  ))]);
+checks.push(['duplicate staged candidates link to an existing project id', candidates
+  .filter((candidate) => candidate.review_status === 'duplicate')
+  .every((candidate) => typeof candidate.duplicate_of_project_id === 'string' && candidate.duplicate_of_project_id.length > 0)]);
 checks.push(['staged candidates include source links and confidence scores', candidates.every((candidate) => (
   requiredCandidateFields.every((field) => Object.hasOwn(candidate, field)) &&
   typeof candidate.source_url === 'string' &&
@@ -60,6 +73,15 @@ checks.push(['candidate IDs are unique', new Set(candidates.map((candidate) => c
 const packageJson = JSON.parse(readFileSync('package.json', 'utf8'));
 checks.push(['package.json exposes check:data script', packageJson.scripts?.['check:data'] === 'node scripts/check-data-ingestion.mjs']);
 checks.push(['package.json exposes ingest:sources script', packageJson.scripts?.['ingest:sources'] === 'node scripts/ingest-sources.mjs']);
+checks.push(['package.json exposes review:candidates script', packageJson.scripts?.['review:candidates'] === 'node scripts/review-candidates.mjs']);
+
+if (existsSync('scripts/review-candidates.mjs')) {
+  const reviewScript = readFileSync('scripts/review-candidates.mjs', 'utf8');
+  checks.push(['review script supports list/show/promote/reject/duplicate actions', ['list', 'show', 'promote', 'reject', 'duplicate'].every((action) => reviewScript.includes(`case '${action}':`))]);
+  checks.push(['review script reads staged candidates and live projects', reviewScript.includes('data/staged-project-candidates.json') && reviewScript.includes('projects.json')]);
+  checks.push(['review script protects live map by requiring lat/lng before promote', reviewScript.includes('lat') && reviewScript.includes('lng') && reviewScript.includes('Cannot promote')]);
+  checks.push(['review script can mark candidate duplicate of existing project', reviewScript.includes('duplicate_of_project_id') && reviewScript.includes("review_status: 'duplicate'")]);
+}
 
 const failed = checks.filter(([, passed]) => !passed);
 if (failed.length) {

@@ -26,7 +26,9 @@ export default function ProjectBottomSheet({ project, onClose }: ProjectBottomSh
         {project.completed_at ? <span><strong>Completed:</strong> {project.completed_at}</span> : null}
         {project.last_verified ? <span><strong>Verified:</strong> {project.last_verified}</span> : null}
         <span><strong>Sources:</strong> {sourceCountText}</span>
+        {project.locationAccuracyMeters ? <span><strong>GPS accuracy:</strong> ±{Math.round(project.locationAccuracyMeters)}m</span> : null}
       </div>
+      {project.photoDataUrl ? <img className="sheet-photo" src={project.photoDataUrl} alt={`${project.name} field capture`} /> : null}
       <p className="sheet-summary">{project.summary}</p>
       {project.sources?.length ? (
         <div className="sheet-sources">

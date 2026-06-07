@@ -240,7 +240,7 @@
     "name": "Dali Museum Expansion",
     "address": "1 Dali Boulevard, St. Petersburg, FL",
     "lat": 27.7659,
-    "lng": -82.6310,
+    "lng": -82.631,
     "status": "proposed",
     "completed_at": null,
     "expected_open": "2028",
@@ -272,6 +272,474 @@
       {
         "label": "City Historic Gas Plant District page",
         "url": "https://www.stpete.org/residents/current_projects/historic_gas_plant_district.php"
+      }
+    ]
+  },
+  {
+    "id": "225-8th-st-n",
+    "name": "225 8th St N",
+    "address": "225 8th St N, St. Petersburg, FL",
+    "lat": 27.773847,
+    "lng": -82.644738,
+    "status": "under_construction",
+    "completed_at": null,
+    "expected_open": null,
+    "last_verified": "2026-05-17",
+    "summary": "225 8th St N is a under construction project surfaced from St. Pete Rising - Under Construction. Details should be enriched during final permit/source review.",
+    "sources": [
+      {
+        "label": "St. Pete Rising - Under Construction",
+        "url": "https://stpeterising.com/225-8th-st-n-townhomes"
+      }
+    ]
+  },
+  {
+    "id": "2700-central",
+    "name": "2700 Central",
+    "address": "2700 Central, St. Petersburg, FL",
+    "lat": 27.774447,
+    "lng": -82.670084,
+    "status": "under_construction",
+    "completed_at": null,
+    "expected_open": null,
+    "last_verified": "2026-05-17",
+    "summary": "2700 Central is a under construction project surfaced from St. Pete Rising - Under Construction. Details should be enriched during final permit/source review.",
+    "sources": [
+      {
+        "label": "St. Pete Rising - Under Construction",
+        "url": "https://stpeterising.com/2700-central"
+      }
+    ]
+  },
+  {
+    "id": "700-3rd-avenue-south",
+    "name": "700 3rd Avenue South",
+    "address": "700 3rd Avenue South, St. Petersburg, FL",
+    "lat": 27.768469,
+    "lng": -82.644007,
+    "status": "under_construction",
+    "completed_at": null,
+    "expected_open": null,
+    "last_verified": "2026-05-17",
+    "summary": "700 3rd Avenue South is a under construction project surfaced from St. Pete Rising - Under Construction. Details should be enriched during final permit/source review.",
+    "sources": [
+      {
+        "label": "St. Pete Rising - Under Construction",
+        "url": "https://stpeterising.com/700-3rd-ave-s"
+      }
+    ]
+  },
+  {
+    "id": "alante",
+    "name": "Alante",
+    "address": "302 15th Street North, St. Petersburg, FL",
+    "lat": 27.775211,
+    "lng": -82.654066,
+    "status": "under_construction",
+    "completed_at": null,
+    "expected_open": null,
+    "last_verified": "2026-05-17",
+    "summary": "Alante is a under construction project surfaced from St. Pete Rising - Under Construction. Details should be enriched during final permit/source review.",
+    "sources": [
+      {
+        "label": "St. Pete Rising - Under Construction",
+        "url": "https://stpeterising.com/alante"
+      }
+    ]
+  },
+  {
+    "id": "american-house-senior-living",
+    "name": "American House Senior Living",
+    "address": "1101 66th St N, St. Petersburg, FL",
+    "lat": 27.781736,
+    "lng": -82.728335,
+    "status": "under_construction",
+    "completed_at": null,
+    "expected_open": null,
+    "last_verified": "2026-05-17",
+    "summary": "American House Senior Living is a under construction project surfaced from St. Pete Rising - Under Construction. Details should be enriched during final permit/source review.",
+    "sources": [
+      {
+        "label": "St. Pete Rising - Under Construction",
+        "url": "https://stpeterising.com/american-house-senior-living"
+      }
+    ]
+  },
+  {
+    "id": "canvas-city-homes",
+    "name": "Canvas City Homes",
+    "address": "2700 5th Ave S, St. Petersburg, FL",
+    "lat": 27.766411,
+    "lng": -82.670006,
+    "status": "under_construction",
+    "completed_at": null,
+    "expected_open": null,
+    "last_verified": "2026-05-17",
+    "summary": "Canvas City Homes is a under construction project surfaced from St. Pete Rising - Under Construction. Details should be enriched during final permit/source review.",
+    "sources": [
+      {
+        "label": "St. Pete Rising - Under Construction",
+        "url": "https://stpeterising.com/canvas-city-homes"
+      }
+    ]
+  },
+  {
+    "id": "central-park-food-hall",
+    "name": "Central Park Food Hall",
+    "address": "551 Central Avenue, St. Petersburg, FL",
+    "lat": 27.771356,
+    "lng": -82.641138,
+    "status": "under_construction",
+    "completed_at": null,
+    "expected_open": null,
+    "last_verified": "2026-05-17",
+    "summary": "Central Park Food Hall is a under construction project surfaced from St. Pete Rising - Under Construction. Details should be enriched during final permit/source review.",
+    "sources": [
+      {
+        "label": "St. Pete Rising - Under Construction",
+        "url": "https://stpeterising.com/central-park-food-hall"
+      }
+    ]
+  },
+  {
+    "id": "chabad-center",
+    "name": "Chabad Center",
+    "address": "533 4th St N, St. Petersburg, FL",
+    "lat": 27.777961,
+    "lng": -82.638454,
+    "status": "under_construction",
+    "completed_at": null,
+    "expected_open": null,
+    "last_verified": "2026-05-17",
+    "summary": "Chabad Center is a under construction project surfaced from St. Pete Rising - Under Construction. Details should be enriched during final permit/source review.",
+    "sources": [
+      {
+        "label": "St. Pete Rising - Under Construction",
+        "url": "https://stpeterising.com/chabad-center-for-jewish-life-learning"
+      }
+    ]
+  },
+  {
+    "id": "cordova-inn-expansion",
+    "name": "Cordova Inn Expansion",
+    "address": "253 2nd Ave N, St. Petersburg, FL",
+    "lat": 27.773795,
+    "lng": -82.636718,
+    "status": "under_construction",
+    "completed_at": null,
+    "expected_open": null,
+    "last_verified": "2026-05-17",
+    "summary": "Cordova Inn Expansion is a under construction project surfaced from St. Pete Rising - Under Construction. Details should be enriched during final permit/source review.",
+    "sources": [
+      {
+        "label": "St. Pete Rising - Under Construction",
+        "url": "https://stpeterising.com/cordova-inn-expansion"
+      }
+    ]
+  },
+  {
+    "id": "driftwood-on-central",
+    "name": "Driftwood on Central",
+    "address": "2875 Central Avenue, St. Petersburg, FL",
+    "lat": 27.771077,
+    "lng": -82.672205,
+    "status": "under_construction",
+    "completed_at": null,
+    "expected_open": null,
+    "last_verified": "2026-05-17",
+    "summary": "Driftwood on Central is a under construction project surfaced from St. Pete Rising - Under Construction. Details should be enriched during final permit/source review.",
+    "sources": [
+      {
+        "label": "St. Pete Rising - Under Construction",
+        "url": "https://stpeterising.com/driftwood-on-central"
+      }
+    ]
+  },
+  {
+    "id": "grand-central-townhomes",
+    "name": "Grand Central Townhomes",
+    "address": "2801 1st Ave S, St. Petersburg, FL",
+    "lat": 27.770186,
+    "lng": -82.671387,
+    "status": "under_construction",
+    "completed_at": null,
+    "expected_open": null,
+    "last_verified": "2026-05-17",
+    "summary": "Grand Central Townhomes is a under construction project surfaced from St. Pete Rising - Under Construction. Details should be enriched during final permit/source review.",
+    "sources": [
+      {
+        "label": "St. Pete Rising - Under Construction",
+        "url": "https://stpeterising.com/2801-1st-avenue-south"
+      }
+    ]
+  },
+  {
+    "id": "innovare",
+    "name": "Innovare",
+    "address": "850 5th Ave S, St. Petersburg, FL",
+    "lat": 27.765517,
+    "lng": -82.646103,
+    "status": "under_construction",
+    "completed_at": null,
+    "expected_open": null,
+    "last_verified": "2026-05-17",
+    "summary": "Innovare is a under construction project surfaced from St. Pete Rising - Under Construction. Details should be enriched during final permit/source review.",
+    "sources": [
+      {
+        "label": "St. Pete Rising - Under Construction",
+        "url": "https://stpeterising.com/innovare"
+      }
+    ]
+  },
+  {
+    "id": "jordan-park-redevelopment",
+    "name": "Jordan Park Redevelopment",
+    "address": "1245 Jordan Park St S, St. Petersburg, FL",
+    "lat": 27.757951,
+    "lng": -82.664916,
+    "status": "under_construction",
+    "completed_at": null,
+    "expected_open": null,
+    "last_verified": "2026-05-17",
+    "summary": "Jordan Park Redevelopment is a under construction project surfaced from St. Pete Rising - Under Construction. Details should be enriched during final permit/source review.",
+    "sources": [
+      {
+        "label": "St. Pete Rising - Under Construction",
+        "url": "https://stpeterising.com/jordan-park-redevelopment"
+      }
+    ]
+  },
+  {
+    "id": "lake-maggiore-apartments",
+    "name": "Lake Maggiore Apartments",
+    "address": "3049 6th St S, St. Petersburg, FL",
+    "lat": 27.741012,
+    "lng": -82.640841,
+    "status": "under_construction",
+    "completed_at": null,
+    "expected_open": null,
+    "last_verified": "2026-05-17",
+    "summary": "Lake Maggiore Apartments is a under construction project surfaced from St. Pete Rising - Under Construction. Details should be enriched during final permit/source review.",
+    "sources": [
+      {
+        "label": "St. Pete Rising - Under Construction",
+        "url": "https://stpeterising.com/lake-maggiore-apartments"
+      }
+    ]
+  },
+  {
+    "id": "park-and-main",
+    "name": "Park & Main",
+    "address": "300 Main Street, St. Petersburg, FL",
+    "lat": 27.892045,
+    "lng": -82.661246,
+    "status": "under_construction",
+    "completed_at": null,
+    "expected_open": null,
+    "last_verified": "2026-05-17",
+    "summary": "Park & Main is a under construction project surfaced from St. Pete Rising - Under Construction. Details should be enriched during final permit/source review.",
+    "sources": [
+      {
+        "label": "St. Pete Rising - Under Construction",
+        "url": "https://stpeterising.com/echelon-site-9"
+      }
+    ]
+  },
+  {
+    "id": "second-district-court-of-appeals",
+    "name": "Second District Court of Appeals",
+    "address": "525 Mirror Lake Drive, St. Petersburg, FL",
+    "lat": 27.774138,
+    "lng": -82.640833,
+    "status": "under_construction",
+    "completed_at": null,
+    "expected_open": null,
+    "last_verified": "2026-05-17",
+    "summary": "Second District Court of Appeals is a under construction project surfaced from St. Pete Rising - Under Construction. Details should be enriched during final permit/source review.",
+    "sources": [
+      {
+        "label": "St. Pete Rising - Under Construction",
+        "url": "https://stpeterising.com/second-district-court-of-appeal"
+      }
+    ]
+  },
+  {
+    "id": "shell-dash-townhomes",
+    "name": "Shell Dash Townhomes",
+    "address": "1120 16th St S, St. Petersburg, FL",
+    "lat": 27.759159,
+    "lng": -82.654665,
+    "status": "under_construction",
+    "completed_at": null,
+    "expected_open": null,
+    "last_verified": "2026-05-17",
+    "summary": "Shell Dash Townhomes is a under construction project surfaced from St. Pete Rising - Under Construction. Details should be enriched during final permit/source review.",
+    "sources": [
+      {
+        "label": "St. Pete Rising - Under Construction",
+        "url": "https://stpeterising.com/shell-dash-townhomes"
+      }
+    ]
+  },
+  {
+    "id": "shoreline",
+    "name": "Shoreline",
+    "address": "311 112th Ave N, St. Petersburg, FL",
+    "lat": 27.873981,
+    "lng": -82.637899,
+    "status": "under_construction",
+    "completed_at": null,
+    "expected_open": null,
+    "last_verified": "2026-05-17",
+    "summary": "Shoreline is a under construction project surfaced from St. Pete Rising - Under Construction. Details should be enriched during final permit/source review.",
+    "sources": [
+      {
+        "label": "St. Pete Rising - Under Construction",
+        "url": "https://stpeterising.com/shoreline"
+      }
+    ]
+  },
+  {
+    "id": "tampa-bay-innovation-center",
+    "name": "Tampa Bay Innovation Center",
+    "address": "1101 4th Street South, St. Petersburg, FL",
+    "lat": 27.759127,
+    "lng": -82.63875,
+    "status": "under_construction",
+    "completed_at": null,
+    "expected_open": null,
+    "last_verified": "2026-05-17",
+    "summary": "Tampa Bay Innovation Center is a under construction project surfaced from St. Pete Rising - Under Construction. Details should be enriched during final permit/source review.",
+    "sources": [
+      {
+        "label": "St. Pete Rising - Under Construction",
+        "url": "https://stpeterising.com/tampa-bay-innovation-center"
+      }
+    ]
+  },
+  {
+    "id": "terraces-at-87th",
+    "name": "Terraces at 87th",
+    "address": "8700 4th St N, St. Petersburg, FL",
+    "lat": 27.851736,
+    "lng": -82.638859,
+    "status": "under_construction",
+    "completed_at": null,
+    "expected_open": null,
+    "last_verified": "2026-05-17",
+    "summary": "Terraces at 87th is a under construction project surfaced from St. Pete Rising - Under Construction. Details should be enriched during final permit/source review.",
+    "sources": [
+      {
+        "label": "St. Pete Rising - Under Construction",
+        "url": "https://stpeterising.com/8700-4th-street-north"
+      }
+    ]
+  },
+  {
+    "id": "the-bismarck",
+    "name": "The Bismarck",
+    "address": "3023 1st Ave N, St. Petersburg, FL",
+    "lat": 27.771941,
+    "lng": -82.674371,
+    "status": "under_construction",
+    "completed_at": null,
+    "expected_open": null,
+    "last_verified": "2026-05-17",
+    "summary": "The Bismarck is a under construction project surfaced from St. Pete Rising - Under Construction. Details should be enriched during final permit/source review.",
+    "sources": [
+      {
+        "label": "St. Pete Rising - Under Construction",
+        "url": "https://stpeterising.com/the-bismarck"
+      }
+    ]
+  },
+  {
+    "id": "the-edge-collective",
+    "name": "The EDGE Collective",
+    "address": "1246 Central Avenue, St. Petersburg, FL",
+    "lat": 27.770728,
+    "lng": -82.651605,
+    "status": "under_construction",
+    "completed_at": null,
+    "expected_open": null,
+    "last_verified": "2026-05-17",
+    "summary": "The EDGE Collective is a under construction project surfaced from St. Pete Rising - Under Construction. Details should be enriched during final permit/source review.",
+    "sources": [
+      {
+        "label": "St. Pete Rising - Under Construction",
+        "url": "https://stpeterising.com/the-edge-collective"
+      }
+    ]
+  },
+  {
+    "id": "the-julia",
+    "name": "The Julia",
+    "address": "100 4th Ave N, St. Petersburg, FL",
+    "lat": 27.776307,
+    "lng": -82.634167,
+    "status": "under_construction",
+    "completed_at": null,
+    "expected_open": null,
+    "last_verified": "2026-05-17",
+    "summary": "The Julia is a under construction project surfaced from St. Pete Rising - Under Construction. Details should be enriched during final permit/source review.",
+    "sources": [
+      {
+        "label": "St. Pete Rising - Under Construction",
+        "url": "https://stpeterising.com/the-julia"
+      }
+    ]
+  },
+  {
+    "id": "union-central-townhomes",
+    "name": "Union Central Townhomes",
+    "address": "400 31st Street North, St. Petersburg, FL",
+    "lat": 27.775855,
+    "lng": -82.675445,
+    "status": "under_construction",
+    "completed_at": null,
+    "expected_open": null,
+    "last_verified": "2026-05-17",
+    "summary": "Union Central Townhomes is a under construction project surfaced from St. Pete Rising - Under Construction. Details should be enriched during final permit/source review.",
+    "sources": [
+      {
+        "label": "St. Pete Rising - Under Construction",
+        "url": "https://stpeterising.com/union-central-district-townhomes"
+      }
+    ]
+  },
+  {
+    "id": "uptown-kenwood",
+    "name": "Uptown Kenwood",
+    "address": "2536 13th Ave N, St. Petersburg, FL",
+    "lat": 27.784592,
+    "lng": -82.667456,
+    "status": "under_construction",
+    "completed_at": null,
+    "expected_open": null,
+    "last_verified": "2026-05-17",
+    "summary": "Uptown Kenwood is a under construction project surfaced from St. Pete Rising - Under Construction. Details should be enriched during final permit/source review.",
+    "sources": [
+      {
+        "label": "St. Pete Rising - Under Construction",
+        "url": "https://stpeterising.com/uptown-kenwood"
+      }
+    ]
+  },
+  {
+    "id": "whole-foods",
+    "name": "Whole Foods",
+    "address": "201 38th Ave N, St. Petersburg, FL",
+    "lat": 27.808324,
+    "lng": -82.635427,
+    "status": "under_construction",
+    "completed_at": null,
+    "expected_open": null,
+    "last_verified": "2026-05-17",
+    "summary": "Whole Foods is a under construction project surfaced from St. Pete Rising - Under Construction. Details should be enriched during final permit/source review.",
+    "sources": [
+      {
+        "label": "St. Pete Rising - Under Construction",
+        "url": "https://stpeterising.com/whole-foods"
       }
     ]
   }
