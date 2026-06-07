@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { ImageryOption } from './components/MapLegend';
+import FieldCapturePanel from './components/FieldCapturePanel';
 import ImageryBadge from './components/ImageryBadge';
 import MapLegend from './components/MapLegend';
 import MapView from './components/MapView';
@@ -7,6 +8,23 @@ import ProjectBottomSheet from './components/ProjectBottomSheet';
 import ProjectSearchPanel from './components/ProjectSearchPanel';
 import type { ImageryMode } from './lib/imageryLayers';
 import { projects, shouldShowProject, type Project, type ProjectStatus } from './lib/projects';
+
+const fieldCaptureStorageKey = 'wbb-field-capture-projects';
+
+function loadFieldCaptureProjects(): Project[] {
+  try {
+    const raw = window.localStorage.getItem(fieldCaptureStorageKey);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as Project[];
+    return Array.isArray(parsed) ? parsed.filter((project) => project?.id && project.lat && project.lng) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveFieldCaptureProjects(nextProjects: Project[]) {
+  window.localStorage.setItem(fieldCaptureStorageKey, JSON.stringify(nextProjects));
+}
 
 export default function App() {
   const [selectedImageryMode, setSelectedImageryMode] = useState<ImageryMode>('satellite');
@@ -21,10 +39,23 @@ export default function App() {
     dateText: 'Imagery date loading',
     sourceText: 'Checking the current map view'
   });
+  const [fieldCaptureProjects, setFieldCaptureProjects] = useState<Project[]>(() => loadFieldCaptureProjects());
+
+  function handleFieldProjectCreate(project: Project) {
+    setFieldCaptureProjects((currentProjects) => {
+      const nextProjects = [project, ...currentProjects].slice(0, 30);
+      saveFieldCaptureProjects(nextProjects);
+      return nextProjects;
+    });
+    setSelectedProject(project);
+  }
 
   const activeProjects = useMemo(
-    () => projects.filter(shouldShowProject).filter((project) => project.lat && project.lng),
-    []
+    () => [
+      ...fieldCaptureProjects.filter(shouldShowProject).filter((project) => project.lat && project.lng),
+      ...projects.filter(shouldShowProject).filter((project) => project.lat && project.lng)
+    ],
+    [fieldCaptureProjects]
   );
 
   const visibleProjects = useMemo(
@@ -49,6 +80,7 @@ export default function App() {
   return (
     <div className={`app-shell ${selectedProject ? 'has-selected-project' : ''}`}>
       <MapView
+        key={visibleProjects.map((project) => project.id).join('|')}
         projects={visibleProjects}
         selectedProject={selectedProject}
         selectedImageryMode={selectedImageryMode}
@@ -78,6 +110,7 @@ export default function App() {
         onLegendToggle={() => setIsLegendOpen((current) => !current)}
       />
       <ImageryBadge dateText={imageryBadge.dateText} sourceText={imageryBadge.sourceText} />
+      <FieldCapturePanel onProjectCreate={handleFieldProjectCreate} />
       <ProjectBottomSheet project={selectedProject} onClose={() => setSelectedProject(null)} />
     </div>
   );

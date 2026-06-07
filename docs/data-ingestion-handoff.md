@@ -18,6 +18,28 @@ This note exists so the next Hermes/Codex session can resume the data-ingestion 
 
 ## Work completed so far
 
+Current working tree also has the first review/promote CLI in progress/verified locally:
+
+- `scripts/review-candidates.mjs`
+  - `list` shows `needs_review` candidates and possible duplicates by name/id slug or source URL.
+  - `show <candidate-id>` prints the candidate plus duplicate hints.
+  - `promote <candidate-id>` appends to `projects.json` only when required live-map fields are valid, including numeric `lat`/`lng`.
+  - `reject <candidate-id> [reason]` marks a staged candidate rejected.
+  - `duplicate <candidate-id> <existing-project-id>` marks a staged candidate duplicate without publishing it.
+- `npm run review:candidates -- <action>` exposes the script.
+- `scripts/check-data-ingestion.mjs` validates the review script contract.
+
+Verified after adding review CLI:
+
+```bash
+npm run review:candidates -- list
+npm run review:candidates -- show st-pete-rising-under-construction-1000-1st-ave-north
+node scripts/review-candidates.mjs promote st-pete-rising-under-construction-1000-1st-ave-north # correctly refuses missing lat/lng
+npm run check:data
+npm run check:ui
+npm run build
+```
+
 Latest relevant commit:
 
 ```text
@@ -75,18 +97,16 @@ The purpose of staging is to prevent bad/duplicate/low-confidence data from poll
 
 ## Best next task
 
-Build a review/promote script.
+Review/promote script now exists locally. Next best task: add geocoding suggestions/cache so candidates can get reviewed coordinates without manually searching every address.
 
-Suggested command shape:
+Current command shape:
 
 ```bash
-npm run review:candidates
-# or
-node scripts/review-candidates.mjs list
-node scripts/review-candidates.mjs show <candidate-id>
-node scripts/review-candidates.mjs promote <candidate-id>
-node scripts/review-candidates.mjs reject <candidate-id>
-node scripts/review-candidates.mjs duplicate <candidate-id> <existing-project-id>
+npm run review:candidates -- list
+npm run review:candidates -- show <candidate-id>
+npm run review:candidates -- promote <candidate-id>
+npm run review:candidates -- reject <candidate-id> [reason]
+npm run review:candidates -- duplicate <candidate-id> <existing-project-id>
 ```
 
 Minimum useful behavior:
