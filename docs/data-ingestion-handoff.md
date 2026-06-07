@@ -176,6 +176,32 @@ npm run check:data
 - Do not represent staged candidates as verified facts until reviewed.
 
 
+## Detail-page enrichment layer
+
+`npm run ingest:sources` now does a second pass over staged candidate source URLs before writing `data/staged-project-candidates.json`:
+
+- Fetches detail pages for the first batch of candidates, controlled by `WBB_DETAIL_LIMIT`.
+- Extracts audit fields: `detail_fetched_at`, `detail_excerpt`, `extracted_address`, and `developer`.
+- Uses listing/name-derived addresses first, then falls back to conservative article text address extraction.
+- Preserves existing review/geocode state (`promoted`, `duplicate`, manual coordinates, geocode audit fields) when the staged file is refreshed.
+- Keeps extracted detail text as short excerpts for review context, not full copied articles.
+
+Useful commands:
+
+```bash
+WBB_DETAIL_LIMIT=12 npm run ingest:sources
+npm run geocode:candidates -- --apply --limit 6
+npm run check:data
+```
+
+Latest verified staged state after this layer:
+
+- 43 staged candidates total.
+- 12 candidates have detail excerpts/address/developer enrichment from source pages.
+- 10 candidates have developer names extracted.
+- Review state remains stable: 26 promoted, 11 duplicate, 6 needs review.
+
+
 ## Geocoding reliability layer
 
 The next map-accuracy layer is `npm run geocode:candidates`, which is intentionally staged and conservative:

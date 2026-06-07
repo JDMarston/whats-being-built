@@ -112,6 +112,21 @@ if (existsSync('scripts/geocode-candidates.mjs')) {
   checks.push(['geocode script skips reviewed candidates unless explicitly requested', geocodeScript.includes("!includeReviewed && candidate.review_status !== 'needs_review'") && geocodeScript.includes('--include-reviewed')]);
 }
 
+if (existsSync('scripts/ingest-sources.mjs')) {
+  const ingestScript = readFileSync('scripts/ingest-sources.mjs', 'utf8');
+  checks.push(['ingest script fetches candidate detail pages for enrichment', ingestScript.includes('enrichCandidateFromDetailPage') && ingestScript.includes('fetchDetailPages')]);
+  checks.push(['ingest detail enrichment extracts address, developer, and article text', ['extracted_address', 'developer', 'detail_excerpt'].every((field) => ingestScript.includes(field))]);
+  checks.push(['ingest detail enrichment preserves review state for existing candidates', ingestScript.includes('mergeExistingReviewState') && ingestScript.includes('review_status')]);
+}
+
+checks.push(['staged candidates include detail enrichment audit fields', candidates.every((candidate) => (
+  Object.hasOwn(candidate, 'detail_fetched_at') &&
+  Object.hasOwn(candidate, 'detail_excerpt') &&
+  Object.hasOwn(candidate, 'extracted_address') &&
+  Object.hasOwn(candidate, 'developer')
+))]);
+checks.push(['at least one staged candidate has address or developer extracted from a detail page', candidates.some((candidate) => candidate.extracted_address || candidate.developer)]);
+
 const failed = checks.filter(([, passed]) => !passed);
 if (failed.length) {
   console.error(`Data ingestion checks failed (${failed.length}/${checks.length}):`);
