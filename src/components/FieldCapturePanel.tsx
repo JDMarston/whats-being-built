@@ -27,7 +27,7 @@ function readImageAsDataUrl(file: File): Promise<string | null> {
 export default function FieldCapturePanel({ onProjectCreate }: FieldCapturePanelProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [status, setStatus] = useState<CaptureStatus>('idle');
-  const [message, setMessage] = useState('Use this while standing at a mystery construction site.');
+  const [message, setMessage] = useState('point your phone at a mystery construction site and save where you are standing.');
   const [lat, setLat] = useState<number | null>(null);
   const [lng, setLng] = useState<number | null>(null);
   const [accuracy, setAccuracy] = useState<number | null>(null);
@@ -73,7 +73,7 @@ export default function FieldCapturePanel({ onProjectCreate }: FieldCapturePanel
     const dataUrl = await readImageAsDataUrl(file);
     setPhotoDataUrl(dataUrl);
     if (dataUrl) {
-      setMessage('Photo attached locally. Capture GPS before saving the site.');
+      setMessage('Photo attached locally. Capture GPS before saving the site so it can be matched later.');
     }
   }
 
@@ -112,12 +112,12 @@ export default function FieldCapturePanel({ onProjectCreate }: FieldCapturePanel
   return (
     <aside className={`field-capture ${isOpen ? 'is-open' : ''} status-${status}`} aria-label="Field capture">
       <button type="button" className="field-capture-toggle" onClick={() => setIsOpen((current) => !current)}>
-        {isOpen ? 'Close capture' : 'Add site here'}
+        {isOpen ? 'Close capture' : "What's being built here?"}
       </button>
       {isOpen ? (
         <div className="field-capture-panel">
           <div className="field-capture-heading">
-            <strong>Field capture</strong>
+            <strong>Field mode</strong>
             <span>{message}</span>
           </div>
           <label>

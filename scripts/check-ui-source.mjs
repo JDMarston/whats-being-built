@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 
 const files = {
   app: readFileSync('src/App.tsx', 'utf8'),
@@ -7,7 +7,10 @@ const files = {
   search: readFileSync('src/components/ProjectSearchPanel.tsx', 'utf8'),
   sheet: readFileSync('src/components/ProjectBottomSheet.tsx', 'utf8'),
   mapView: readFileSync('src/components/MapView.tsx', 'utf8'),
-  styles: readFileSync('src/styles.css', 'utf8')
+  styles: readFileSync('src/styles.css', 'utf8'),
+  field: readFileSync('src/components/FieldCapturePanel.tsx', 'utf8'),
+  index: readFileSync('index.html', 'utf8'),
+  readme: existsSync('README.md') ? readFileSync('README.md', 'utf8') : ''
 };
 
 const checks = [
@@ -20,7 +23,14 @@ const checks = [
   ['App no longer renders the old header/top bar component', !files.app.includes('<HeaderControls')],
   ['UI copy is not scoped to St. Petersburg', !files.app.includes('St. Petersburg') && !files.header.includes('St. Petersburg')],
   ['Map options menu owns imagery mode controls', files.legend.includes('Imagery mode') && files.legend.includes('onImageryChange')],
-  ['Styles no longer reserve a grid row for top header', !files.styles.includes('grid-template-rows: auto 1fr')]
+  ['Styles no longer reserve a grid row for top header', !files.styles.includes('grid-template-rows: auto 1fr')],
+  ['App renders a public hobby-project intro panel', files.app.includes('site-intro-card') && files.app.includes('hobby project') && files.app.includes('I hate not knowing')],
+  ['Intro panel shows map data stats and hosted status copy', files.app.includes('intro-stat-grid') && files.app.includes('Live on Netlify')],
+  ['Search placeholder is written for sidewalk curiosity', files.search.includes('Search a project, address, or neighborhood')],
+  ['Field mode copy uses the product north star', files.field.includes("What's being built here?") && files.field.includes('point your phone')],
+  ['Project sheet includes trust and source action affordances', files.sheet.includes('sheet-trust-card') && files.sheet.includes('Open source')],
+  ['Index has social metadata for the hosted site', files.index.includes('og:title') && files.index.includes('whatsbeingbuilt.netlify.app')],
+  ['README documents the Netlify hobby project and commands', files.readme.includes('https://whatsbeingbuilt.netlify.app') && files.readme.includes('hobby project') && files.readme.includes('npm run build')]
 ];
 
 const failed = checks.filter(([, passed]) => !passed);

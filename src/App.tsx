@@ -65,6 +65,16 @@ export default function App() {
     [activeProjects, selectedStatus]
   );
 
+  const projectStats = useMemo(() => {
+    const underConstruction = activeProjects.filter((project) => project.status === 'under_construction').length;
+    const sourcedProjects = activeProjects.filter((project) => project.sources?.length).length;
+    return {
+      total: activeProjects.length,
+      underConstruction,
+      sourcedProjects
+    };
+  }, [activeProjects]);
+
   const imageryOptions = useMemo<ImageryOption[]>(() => [
     { value: 'satellite', label: 'Satellite' },
     { value: 'satellite-streets', label: 'Satellite + streets' },
@@ -90,6 +100,20 @@ export default function App() {
         onImageryNoteChange={setImageryNote}
         onImageryBadgeChange={setImageryBadge}
       />
+      <section className="site-intro-card" aria-label="About What's Being Built">
+        <div className="intro-kicker">hobby project · Live on Netlify</div>
+        <h1>What’s Being Built?</h1>
+        <p>
+          A map for the exact feeling of walking past a crane and thinking: I hate not knowing
+          what is going up around me.
+        </p>
+        <div className="intro-stat-grid" aria-label="Current map stats">
+          <span><strong>{projectStats.total}</strong><small>mapped projects</small></span>
+          <span><strong>{projectStats.underConstruction}</strong><small>under construction</small></span>
+          <span><strong>{projectStats.sourcedProjects}</strong><small>with sources</small></span>
+        </div>
+        <p className="intro-note">Tap a pin, search an address, or use field mode when you’re standing near a mystery site.</p>
+      </section>
       <ProjectSearchPanel
         projects={visibleProjects}
         allProjects={activeProjects}

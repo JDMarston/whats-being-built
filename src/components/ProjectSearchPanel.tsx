@@ -61,7 +61,7 @@ export default function ProjectSearchPanel({
           <input
             type="search"
             value={query}
-            placeholder="Search projects"
+            placeholder="Search a project, address, or neighborhood"
             onFocus={() => setIsOpen(true)}
             onChange={(event) => {
               setQuery(event.target.value);
