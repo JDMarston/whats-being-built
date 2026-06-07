@@ -1272,3 +1272,223 @@ button.active {
     display: none;
   }
 }
+
+
+.review-dashboard {
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: auto;
+  padding: max(18px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(28px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  color: var(--text);
+  background:
+    radial-gradient(circle at top left, rgba(255, 176, 0, 0.18), transparent 34rem),
+    linear-gradient(135deg, #071116, #111c22 54%, #0d1418);
+}
+
+.review-hero,
+.review-workflow-card,
+.review-section {
+  width: min(1120px, 100%);
+  margin: 0 auto 18px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--panel-strong);
+  box-shadow: var(--shadow);
+}
+
+.review-hero {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+}
+
+.review-hero h1 {
+  margin-top: 4px;
+  font-size: clamp(2rem, 7vw, 4.4rem);
+}
+
+.review-hero p,
+.review-section-heading p,
+.review-workflow-card li,
+.review-candidate-card p,
+.review-candidate-card dd,
+.review-recent-list span {
+  color: var(--muted);
+}
+
+.review-back-link,
+.review-actions a {
+  width: fit-content;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0 14px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.08);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.review-stat-grid {
+  width: min(1120px, 100%);
+  margin: 0 auto 18px;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.review-stat-grid span {
+  min-height: 92px;
+  display: grid;
+  align-content: center;
+  gap: 4px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.review-stat-grid strong {
+  font-size: 1.9rem;
+}
+
+.review-stat-grid small {
+  color: var(--muted);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.review-workflow-card,
+.review-section {
+  padding: 18px;
+}
+
+.review-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.review-candidate-card {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.review-card-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--accent);
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.review-candidate-card h3 {
+  margin: 0;
+  font-size: 1.08rem;
+}
+
+.review-candidate-card dl {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.review-candidate-card dl div {
+  display: grid;
+  gap: 3px;
+}
+
+.review-candidate-card dt {
+  color: var(--text);
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.review-candidate-card dd {
+  margin: 0;
+  line-height: 1.35;
+}
+
+.review-excerpt {
+  max-height: 7.5rem;
+  overflow: auto;
+  padding: 10px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.18);
+  font-size: 0.82rem;
+}
+
+.review-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.review-actions code {
+  overflow: auto;
+  padding: 9px;
+  border-radius: 10px;
+  color: #ffe3a4;
+  background: rgba(0, 0, 0, 0.3);
+  font-size: 0.76rem;
+}
+
+.review-recent-list {
+  display: grid;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.review-recent-list li {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+@media (max-width: 900px) {
+  .review-stat-grid,
+  .review-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .review-stat-grid,
+  .review-card-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+.intro-review-link {
+  width: fit-content;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  margin-top: 10px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-decoration: none;
+}

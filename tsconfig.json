@@ -16,5 +16,5 @@
     "noEmit": true,
     "jsx": "react-jsx"
   },
-  "include": ["src", "projects.json"]
+  "include": ["src", "projects.json", "data/**/*.json"]
 }

@@ -6,7 +6,9 @@ const requiredFiles = [
   'data/geocoding-provider-registry.json',
   'scripts/ingest-sources.mjs',
   'scripts/review-candidates.mjs',
-  'scripts/geocode-candidates.mjs'
+  'scripts/geocode-candidates.mjs',
+  'src/lib/stagedCandidates.ts',
+  'src/components/DataReviewDashboard.tsx'
 ];
 
 const checks = [];
@@ -20,7 +22,7 @@ if (existsSync('data/source-registry.json')) {
   registry = JSON.parse(readFileSync('data/source-registry.json', 'utf8'));
 }
 
-checks.push(['source registry has at least 3 source definitions', Array.isArray(registry) && registry.length >= 3]);
+checks.push(['source registry has at least 5 source definitions', Array.isArray(registry) && registry.length >= 5]);
 checks.push(['source registry prefers public/API/feed-friendly sources', registry.every((source) => (
   source.id &&
   source.name &&
@@ -126,6 +128,17 @@ checks.push(['staged candidates include detail enrichment audit fields', candida
   Object.hasOwn(candidate, 'developer')
 ))]);
 checks.push(['at least one staged candidate has address or developer extracted from a detail page', candidates.some((candidate) => candidate.extracted_address || candidate.developer)]);
+checks.push(['staged queue keeps manual review work visible', candidates.some((candidate) => candidate.review_status === 'needs_review')]);
+
+if (existsSync('src/lib/stagedCandidates.ts')) {
+  const stagedCandidateLib = readFileSync('src/lib/stagedCandidates.ts', 'utf8');
+  checks.push(['staged candidate library exposes dashboard stats and priority helpers', ['stagedCandidateStats', 'reviewPriority', 'getNeedsReviewCandidates'].every((symbol) => stagedCandidateLib.includes(symbol))]);
+}
+
+if (existsSync('src/components/DataReviewDashboard.tsx')) {
+  const dashboard = readFileSync('src/components/DataReviewDashboard.tsx', 'utf8');
+  checks.push(['data review dashboard surfaces source, confidence, geocode, and detail audit fields', ['source_url', 'confidence', 'geocode_status', 'detail_excerpt'].every((field) => dashboard.includes(field))]);
+}
 
 const failed = checks.filter(([, passed]) => !passed);
 if (failed.length) {

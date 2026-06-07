@@ -11,7 +11,9 @@ const files = {
   field: readFileSync('src/components/FieldCapturePanel.tsx', 'utf8'),
   index: readFileSync('index.html', 'utf8'),
   readme: existsSync('README.md') ? readFileSync('README.md', 'utf8') : '',
-  netlify: existsSync('netlify.toml') ? readFileSync('netlify.toml', 'utf8') : ''
+  netlify: existsSync('netlify.toml') ? readFileSync('netlify.toml', 'utf8') : '',
+  dataReview: existsSync('src/components/DataReviewDashboard.tsx') ? readFileSync('src/components/DataReviewDashboard.tsx', 'utf8') : '',
+  stagedCandidates: existsSync('src/lib/stagedCandidates.ts') ? readFileSync('src/lib/stagedCandidates.ts', 'utf8') : ''
 };
 
 const checks = [
@@ -25,14 +27,17 @@ const checks = [
   ['UI copy is not scoped to St. Petersburg', !files.app.includes('St. Petersburg') && !files.header.includes('St. Petersburg')],
   ['Map options menu owns imagery mode controls', files.legend.includes('Imagery mode') && files.legend.includes('onImageryChange')],
   ['Styles no longer reserve a grid row for top header', !files.styles.includes('grid-template-rows: auto 1fr')],
-  ['App renders a public hobby-project intro panel', files.app.includes('site-intro-card') && files.app.includes('hobby project') && files.app.includes('I hate not knowing')],
-  ['Intro panel shows map data stats and hosted status copy', files.app.includes('intro-stat-grid') && files.app.includes('Live on Netlify')],
+  ['App keeps intro short and focused on using the map, not explaining the hobby', files.app.includes('site-intro-card') && files.app.includes('Find nearby construction') && !files.app.includes('I hate not knowing')],
+  ['Intro panel shows map data stats and review queue link', files.app.includes('intro-stat-grid') && files.app.includes('Review staged data')],
   ['Search placeholder is written for sidewalk curiosity', files.search.includes('Search a project, address, or neighborhood')],
   ['Field mode copy uses the product north star', files.field.includes("What's being built here?") && files.field.includes('point your phone')],
   ['Project sheet includes trust and source action affordances', files.sheet.includes('sheet-trust-card') && files.sheet.includes('Open source')],
   ['Index has social metadata for the hosted site', files.index.includes('og:title') && files.index.includes('whatsbeingbuilt.netlify.app')],
   ['README documents the Netlify hobby project and commands', files.readme.includes('https://whatsbeingbuilt.netlify.app') && files.readme.includes('hobby project') && files.readme.includes('npm run build')],
-  ['Netlify config publishes the Vite dist build', files.netlify.includes('command = "npm run build"') && files.netlify.includes('publish = "dist"')]
+  ['Netlify config publishes the Vite dist build', files.netlify.includes('command = "npm run build"') && files.netlify.includes('publish = "dist"')],
+  ['App routes /review to a data review dashboard', files.app.includes('isReviewDashboardRoute') && files.app.includes('<DataReviewDashboard')],
+  ['Data review dashboard renders staged queue metrics and source links', files.dataReview.includes('review-dashboard') && files.dataReview.includes('Needs review') && files.dataReview.includes('Open source')],
+  ['Staged candidate library imports staged data and computes review priority', files.stagedCandidates.includes('staged-project-candidates.json') && files.stagedCandidates.includes('reviewPriority') && files.stagedCandidates.includes('needs_review')]
 ];
 
 const failed = checks.filter(([, passed]) => !passed);

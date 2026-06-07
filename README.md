@@ -47,3 +47,19 @@ npm run build
 ```
 
 Netlify should serve the `dist/` directory.
+
+
+## Review staged data
+
+The map has a read-only review dashboard at `/review`. It surfaces staged candidates from
+`data/staged-project-candidates.json`, sorted by confidence/detail/geocode evidence so manual
+review can happen before paying for better map/geocoding services.
+
+Useful commands:
+
+```bash
+npm run ingest:sources
+npm run geocode:candidates -- --apply
+npm run review:candidates -- list
+npm run review:candidates -- show <candidate-id>
+```
