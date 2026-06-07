@@ -211,9 +211,17 @@
     "review_status": "needs_review",
     "duplicate_of": null,
     "last_seen": "2026-05-17",
-    "geocode_query": "5475 3rd Ln N, St. Petersburg, FL",
+    "geocode_query": "",
     "geocode_query_source": "source_page_address",
-    "geocode_status": "no bounded St. Petersburg result"
+    "geocode_status": "needs_manual_review",
+    "geocode_provider": "nominatim",
+    "geocode_confidence": 0,
+    "geocode_result_label": "",
+    "geocode_checked_at": "2026-06-07",
+    "geocode_reasons": [
+      "candidate has no usable address"
+    ],
+    "geocode_candidates": []
   },
   {
     "id": "st-pete-rising-under-construction-canvas-city-homes",
@@ -367,9 +375,17 @@
     "review_status": "needs_review",
     "duplicate_of": null,
     "last_seen": "2026-05-17",
-    "geocode_query": "Galaxy Hotel, St. Petersburg, Pinellas County, Florida, USA",
+    "geocode_query": "",
     "geocode_query_source": "candidate_name",
-    "geocode_status": "no bounded St. Petersburg result"
+    "geocode_status": "needs_manual_review",
+    "geocode_provider": "nominatim",
+    "geocode_confidence": 0,
+    "geocode_result_label": "",
+    "geocode_checked_at": "2026-06-07",
+    "geocode_reasons": [
+      "candidate has no usable address"
+    ],
+    "geocode_candidates": []
   },
   {
     "id": "st-pete-rising-under-construction-grand-central-townhomes",
@@ -434,9 +450,17 @@
     "review_status": "needs_review",
     "duplicate_of": null,
     "last_seen": "2026-05-17",
-    "geocode_query": "Innovation Townhomes, St. Petersburg, Pinellas County, Florida, USA",
+    "geocode_query": "",
     "geocode_query_source": "candidate_name",
-    "geocode_status": "no bounded St. Petersburg result"
+    "geocode_status": "needs_manual_review",
+    "geocode_provider": "nominatim",
+    "geocode_confidence": 0,
+    "geocode_result_label": "",
+    "geocode_checked_at": "2026-06-07",
+    "geocode_reasons": [
+      "candidate has no usable address"
+    ],
+    "geocode_candidates": []
   },
   {
     "id": "st-pete-rising-under-construction-jordan-park-redevelopment",
@@ -673,9 +697,17 @@
     "review_status": "needs_review",
     "duplicate_of": null,
     "last_seen": "2026-05-17",
-    "geocode_query": "1523 Dr. MLK Jr Street South, St. Petersburg, FL",
+    "geocode_query": "",
     "geocode_query_source": "source_page_address",
-    "geocode_status": "no bounded St. Petersburg result"
+    "geocode_status": "needs_manual_review",
+    "geocode_provider": "nominatim",
+    "geocode_confidence": 0,
+    "geocode_result_label": "",
+    "geocode_checked_at": "2026-06-07",
+    "geocode_reasons": [
+      "candidate has no usable address"
+    ],
+    "geocode_candidates": []
   },
   {
     "id": "st-pete-rising-under-construction-soho-st-pete",
@@ -694,9 +726,17 @@
     "review_status": "needs_review",
     "duplicate_of": null,
     "last_seen": "2026-05-17",
-    "geocode_query": "SOHO St. Pete, St. Petersburg, Pinellas County, Florida, USA",
+    "geocode_query": "",
     "geocode_query_source": "candidate_name",
-    "geocode_status": "no bounded St. Petersburg result"
+    "geocode_status": "needs_manual_review",
+    "geocode_provider": "nominatim",
+    "geocode_confidence": 0,
+    "geocode_result_label": "",
+    "geocode_checked_at": "2026-06-07",
+    "geocode_reasons": [
+      "candidate has no usable address"
+    ],
+    "geocode_candidates": []
   },
   {
     "id": "st-pete-rising-under-construction-tampa-bay-innovation-center",
@@ -870,9 +910,17 @@
     "review_status": "needs_review",
     "duplicate_of": null,
     "last_seen": "2026-05-17",
-    "geocode_query": "The Royal Townhomes, St. Petersburg, Pinellas County, Florida, USA",
+    "geocode_query": "",
     "geocode_query_source": "candidate_name",
-    "geocode_status": "no bounded St. Petersburg result"
+    "geocode_status": "needs_manual_review",
+    "geocode_provider": "nominatim",
+    "geocode_confidence": 0,
+    "geocode_result_label": "",
+    "geocode_checked_at": "2026-06-07",
+    "geocode_reasons": [
+      "candidate has no usable address"
+    ],
+    "geocode_candidates": []
   },
   {
     "id": "st-pete-rising-under-construction-union-central-townhomes",

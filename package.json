@@ -10,7 +10,8 @@
     "check:data": "node scripts/check-data-ingestion.mjs",
     "ingest:sources": "node scripts/ingest-sources.mjs",
     "preview": "vite preview --host 0.0.0.0",
-    "review:candidates": "node scripts/review-candidates.mjs"
+    "review:candidates": "node scripts/review-candidates.mjs",
+    "geocode:candidates": "node scripts/geocode-candidates.mjs"
   },
   "dependencies": {
     "maplibre-gl": "^5.24.0",
