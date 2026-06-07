@@ -1,0 +1,64 @@
+[
+  {
+    "id": "nominatim",
+    "name": "OpenStreetMap Nominatim",
+    "tier": "free",
+    "enabled": true,
+    "role": "current-default",
+    "endpoint": "https://nominatim.openstreetmap.org/search",
+    "minimumConfidence": 0.78,
+    "rateLimitMs": 1100,
+    "bounds": {
+      "city": "St. Petersburg",
+      "state": "FL",
+      "bbox": [
+        27.6,
+        -82.86,
+        27.94,
+        -82.55
+      ],
+      "bboxOrder": "south,west,north,east"
+    },
+    "notes": "Free fallback for staged candidate review. Keep at 1 request/second and never auto-promote low-confidence results."
+  },
+  {
+    "id": "google-geocoding",
+    "name": "Google Geocoding / Places",
+    "tier": "paid_upgrade",
+    "enabled": false,
+    "role": "future-high-accuracy-address-and-place-match",
+    "minimumConfidence": 0.88,
+    "bounds": {
+      "city": "St. Petersburg",
+      "state": "FL",
+      "bbox": [
+        27.6,
+        -82.86,
+        27.94,
+        -82.55
+      ],
+      "bboxOrder": "south,west,north,east"
+    },
+    "notes": "Future paid provider for stronger address/place matching, better rooftop precision, and iPhone field mode."
+  },
+  {
+    "id": "mapbox-geocoding",
+    "name": "Mapbox Geocoding / Search Box",
+    "tier": "paid_upgrade",
+    "enabled": false,
+    "role": "future-mapbox-provider-option",
+    "minimumConfidence": 0.84,
+    "bounds": {
+      "city": "St. Petersburg",
+      "state": "FL",
+      "bbox": [
+        27.6,
+        -82.86,
+        27.94,
+        -82.55
+      ],
+      "bboxOrder": "south,west,north,east"
+    },
+    "notes": "Future paid provider option if Mapbox becomes the main map/tiles stack."
+  }
+]

@@ -3,8 +3,10 @@ import { existsSync, readFileSync } from 'node:fs';
 const requiredFiles = [
   'data/source-registry.json',
   'data/staged-project-candidates.json',
+  'data/geocoding-provider-registry.json',
   'scripts/ingest-sources.mjs',
-  'scripts/review-candidates.mjs'
+  'scripts/review-candidates.mjs',
+  'scripts/geocode-candidates.mjs'
 ];
 
 const checks = [];
@@ -74,6 +76,24 @@ const packageJson = JSON.parse(readFileSync('package.json', 'utf8'));
 checks.push(['package.json exposes check:data script', packageJson.scripts?.['check:data'] === 'node scripts/check-data-ingestion.mjs']);
 checks.push(['package.json exposes ingest:sources script', packageJson.scripts?.['ingest:sources'] === 'node scripts/ingest-sources.mjs']);
 checks.push(['package.json exposes review:candidates script', packageJson.scripts?.['review:candidates'] === 'node scripts/review-candidates.mjs']);
+checks.push(['package.json exposes geocode:candidates script', packageJson.scripts?.['geocode:candidates'] === 'node scripts/geocode-candidates.mjs']);
+
+let geocodingProviders = [];
+if (existsSync('data/geocoding-provider-registry.json')) {
+  geocodingProviders = JSON.parse(readFileSync('data/geocoding-provider-registry.json', 'utf8'));
+}
+checks.push(['geocoding registry has a free default provider and paid upgrade slots', Array.isArray(geocodingProviders) && geocodingProviders.some((provider) => provider.id === 'nominatim' && provider.tier === 'free') && geocodingProviders.some((provider) => provider.tier === 'paid_upgrade')]);
+checks.push(['geocoding providers define confidence floors and St. Pete bounds', geocodingProviders.every((provider) => (
+  provider.id &&
+  provider.name &&
+  provider.enabled !== undefined &&
+  typeof provider.minimumConfidence === 'number' &&
+  provider.minimumConfidence >= 0.7 &&
+  provider.minimumConfidence <= 1 &&
+  provider.bounds?.city === 'St. Petersburg' &&
+  Array.isArray(provider.bounds?.bbox) &&
+  provider.bounds.bbox.length === 4
+))]);
 
 if (existsSync('scripts/review-candidates.mjs')) {
   const reviewScript = readFileSync('scripts/review-candidates.mjs', 'utf8');
@@ -81,6 +101,15 @@ if (existsSync('scripts/review-candidates.mjs')) {
   checks.push(['review script reads staged candidates and live projects', reviewScript.includes('data/staged-project-candidates.json') && reviewScript.includes('projects.json')]);
   checks.push(['review script protects live map by requiring lat/lng before promote', reviewScript.includes('lat') && reviewScript.includes('lng') && reviewScript.includes('Cannot promote')]);
   checks.push(['review script can mark candidate duplicate of existing project', reviewScript.includes('duplicate_of_project_id') && reviewScript.includes("review_status: 'duplicate'")]);
+}
+
+if (existsSync('scripts/geocode-candidates.mjs')) {
+  const geocodeScript = readFileSync('scripts/geocode-candidates.mjs', 'utf8');
+  checks.push(['geocode script is dry-run by default and requires --apply to write', geocodeScript.includes('--apply') && geocodeScript.includes('dry run')]);
+  checks.push(['geocode script reads staged candidates and provider registry', geocodeScript.includes('data/staged-project-candidates.json') && geocodeScript.includes('data/geocoding-provider-registry.json')]);
+  checks.push(['geocode script stores confidence audit fields', ['geocode_status', 'geocode_confidence', 'geocode_provider', 'geocode_result_label'].every((field) => geocodeScript.includes(field))]);
+  checks.push(['geocode script respects provider minimum confidence before assigning coordinates', geocodeScript.includes('minimumConfidence') && geocodeScript.includes('needs_manual_review')]);
+  checks.push(['geocode script skips reviewed candidates unless explicitly requested', geocodeScript.includes("!includeReviewed && candidate.review_status !== 'needs_review'") && geocodeScript.includes('--include-reviewed')]);
 }
 
 const failed = checks.filter(([, passed]) => !passed);

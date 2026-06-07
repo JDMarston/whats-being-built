@@ -174,3 +174,26 @@ npm run check:data
 - Prefer small commits.
 - Do not commit secrets or paid API assumptions.
 - Do not represent staged candidates as verified facts until reviewed.
+
+
+## Geocoding reliability layer
+
+The next map-accuracy layer is `npm run geocode:candidates`, which is intentionally staged and conservative:
+
+- `data/geocoding-provider-registry.json` keeps the active free provider and future paid upgrade slots together.
+- `nominatim` is the current free default for review-only geocoding.
+- `google-geocoding` and `mapbox-geocoding` are disabled paid-upgrade placeholders so the pipeline can swap providers later without rewriting the app.
+- The geocoder is a dry run by default; use `--apply` only when you want to write audit fields back to `data/staged-project-candidates.json`.
+- It only assigns candidate `lat`/`lng` when the result clears the provider confidence floor and lands inside the St. Pete review bounds.
+- Low-confidence, vague, city-center, or out-of-bounds results stay as `geocode_status: "needs_manual_review"`.
+
+Useful commands:
+
+```bash
+npm run geocode:candidates -- --limit 5
+npm run geocode:candidates -- --apply --limit 5
+npm run review:candidates -- list
+```
+
+This is the bridge between broad scraping and the iPhone field-mode goal: scrape widely, geocode conservatively, keep questionable pins staged, and only promote coordinates that are believable.
+
