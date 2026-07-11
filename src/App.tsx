@@ -40,6 +40,7 @@ export default function App() {
   const [isMapOptionsOpen, setIsMapOptionsOpen] = useState(false);
   const [isLegendOpen, setIsLegendOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<ProjectStatus | 'all'>('all');
+  const [isIntroOpen, setIsIntroOpen] = useState(false);
   const [projectCountText, setProjectCountText] = useState('Loading projects');
   const [imageryNote, setImageryNote] = useState('Newest aerial imagery when available');
   const [imageryBadge, setImageryBadge] = useState({
@@ -107,17 +108,29 @@ export default function App() {
         onImageryNoteChange={setImageryNote}
         onImageryBadgeChange={setImageryBadge}
       />
-      <section className="site-intro-card" aria-label="About What's Being Built">
-        <div className="intro-kicker">live project map</div>
-        <h1>What’s Being Built?</h1>
-        <p>Find nearby construction, open the source, and check the review queue when the data looks thin.</p>
-        <div className="intro-stat-grid" aria-label="Current map stats">
-          <span><strong>{projectStats.total}</strong><small>mapped projects</small></span>
-          <span><strong>{projectStats.underConstruction}</strong><small>under construction</small></span>
-          <span><strong>{projectStats.sourcedProjects}</strong><small>with sources</small></span>
+      <section className={`site-intro-card ${isIntroOpen ? 'is-open' : ''}`} aria-label="About What's Being Built">
+        <button
+          type="button"
+          className="intro-summary"
+          aria-expanded={isIntroOpen}
+          onClick={() => setIsIntroOpen((current) => !current)}
+        >
+          <span>What’s Being Built?</span>
+          <small>{projectStats.total} nearby</small>
+          <span className="intro-summary-chevron" aria-hidden="true">{isIntroOpen ? '⌃' : '⌄'}</span>
+        </button>
+        <div className="intro-content">
+          <div className="intro-kicker">worldwide map · St. Pete starter data</div>
+          <h1>What’s Being Built?</h1>
+          <p>Find nearby construction, see the source, and keep thin data in review instead of cluttering the map.</p>
+          <div className="intro-stat-grid" aria-label="Current map stats">
+            <span><strong>{projectStats.total}</strong><small>mapped projects</small></span>
+            <span><strong>{projectStats.underConstruction}</strong><small>under construction</small></span>
+            <span><strong>{projectStats.sourcedProjects}</strong><small>with sources</small></span>
+          </div>
+          <p className="intro-note">The map should follow the place you’re in; St. Pete is just the first seeded area.</p>
+          <a className="intro-review-link" href="/review">Review staged data</a>
         </div>
-        <p className="intro-note">Tap a pin, search an address, or use field mode when you’re standing near a mystery site.</p>
-        <a className="intro-review-link" href="/review">Review staged data</a>
       </section>
       <ProjectSearchPanel
         projects={visibleProjects}

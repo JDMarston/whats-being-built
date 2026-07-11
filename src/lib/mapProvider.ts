@@ -17,6 +17,7 @@ export type MapViewProvider = {
   set3DMode: (enabled: boolean) => void;
   addProjectMarker: (project: Project, markerElement: HTMLElement) => maplibregl.Marker;
   centerOnProject: (lngLat: [number, number]) => void;
+  fitToProjects: (lngLats: Array<[number, number]>) => void;
   setUserLocationMarker: (markerElement: HTMLElement, lngLat: [number, number]) => void;
   centerOnLocation: (lngLat: [number, number], accuracyMeters?: number) => void;
   addLocateControl: (startTracking: (button: HTMLButtonElement) => void, locateButtons: Set<HTMLButtonElement>) => void;
@@ -257,6 +258,19 @@ export function createMapProvider(mapInstance: Map, isMobile: boolean): MapViewP
         zoom: Math.max(mapInstance.getZoom(), isMobile ? 15.2 : 15.5),
         duration: 650,
         padding: isMobile ? { top: 150, bottom: 260, left: 24, right: 24 } : { top: 110, bottom: 180, left: 320, right: 24 }
+      });
+    },
+    fitToProjects(lngLats) {
+      if (!lngLats.length) return;
+      if (lngLats.length === 1) {
+        mapInstance.easeTo({ center: lngLats[0], zoom: isMobile ? 13.8 : 14.4, duration: 650 });
+        return;
+      }
+      const bounds = lngLats.reduce((nextBounds, lngLat) => nextBounds.extend(lngLat), new maplibregl.LngLatBounds(lngLats[0], lngLats[0]));
+      mapInstance.fitBounds(bounds, {
+        maxZoom: isMobile ? 13.8 : 14.4,
+        duration: 700,
+        padding: isMobile ? { top: 126, bottom: 156, left: 22, right: 22 } : { top: 132, bottom: 150, left: 430, right: 390 }
       });
     },
     setUserLocationMarker(markerElement, lngLat) {

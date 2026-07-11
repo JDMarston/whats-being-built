@@ -8,7 +8,12 @@
     "enabled": true,
     "scrapePolicy": "respect_robots_and_terms",
     "refreshCadence": "weekly",
-    "notes": "Public project listing page. Ingest only project names, project detail links, image URLs, and short generated staging summaries; do not copy article bodies."
+    "notes": "Public project listing page. Ingest only project names, project detail links, image URLs, and short generated staging summaries; do not copy article bodies.",
+    "area_id": "st-pete-fl",
+    "addressContext": "St. Petersburg, FL",
+    "adapter": "st-pete-rising-under-construction",
+    "stage": "active",
+    "promotionMode": "manual_review"
   },
   {
     "id": "st-pete-catalyst-development-news",
@@ -19,7 +24,12 @@
     "enabled": false,
     "scrapePolicy": "respect_robots_and_terms",
     "refreshCadence": "weekly",
-    "notes": "Candidate future source for article links and short summaries. Keep disabled until an RSS adapter is added."
+    "notes": "Candidate future source for article links and short summaries. Keep disabled until an RSS adapter is added.",
+    "area_id": "st-pete-fl",
+    "addressContext": "St. Petersburg, FL",
+    "adapter": "needs-adapter",
+    "stage": "candidate",
+    "promotionMode": "manual_review"
   },
   {
     "id": "st-pete-public-meetings-agendas",
@@ -30,7 +40,12 @@
     "enabled": false,
     "scrapePolicy": "respect_robots_and_terms",
     "refreshCadence": "weekly",
-    "notes": "Candidate future source for development-review agenda items; needs a dedicated adapter so agenda text is summarized rather than copied."
+    "notes": "Candidate future source for development-review agenda items; needs a dedicated adapter so agenda text is summarized rather than copied.",
+    "area_id": "st-pete-fl",
+    "addressContext": "St. Petersburg, FL",
+    "adapter": "needs-adapter",
+    "stage": "candidate",
+    "promotionMode": "manual_review"
   },
   {
     "id": "st-pete-accela-permits",
@@ -41,7 +56,12 @@
     "enabled": false,
     "scrapePolicy": "respect_robots_and_terms",
     "refreshCadence": "weekly",
-    "notes": "Candidate permit source for address-level construction clues. Keep disabled until an adapter can query public records without paid map/geocode dependencies."
+    "notes": "Candidate permit source for address-level construction clues. Keep disabled until an adapter can query public records without paid map/geocode dependencies.",
+    "area_id": "st-pete-fl",
+    "addressContext": "St. Petersburg, FL",
+    "adapter": "needs-adapter",
+    "stage": "candidate",
+    "promotionMode": "manual_review"
   },
   {
     "id": "pinellas-property-appraiser",
@@ -52,6 +72,11 @@
     "enabled": false,
     "scrapePolicy": "respect_robots_and_terms",
     "refreshCadence": "monthly",
-    "notes": "Candidate parcel/owner/developer cross-check source. Use for manual review and future enrichment, not bulk scraping, unless terms allow it."
+    "notes": "Candidate parcel/owner/developer cross-check source. Use for manual review and future enrichment, not bulk scraping, unless terms allow it.",
+    "area_id": "tampa-bay-fl",
+    "addressContext": "Pinellas County, FL",
+    "adapter": "needs-adapter",
+    "stage": "candidate",
+    "promotionMode": "manual_review"
   }
 ]

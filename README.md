@@ -23,10 +23,23 @@ The long-term goal is a construction-site “what is this?” app: open it on an
 ```bash
 npm install
 npm run dev
+npm run mobile:open
 npm run check:data
 npm run check:ui
 npm run build
 ```
+
+## Mobile layout testing
+
+Keep `npm run dev` running, then use:
+
+```bash
+npm run mobile:open
+```
+
+That opens `http://localhost:5173/mobile-preview.html`, a desktop mobile-layout lab with iPhone SE, regular iPhone, Pro, and Pro Max viewport presets plus portrait/landscape and map/review route controls.
+
+The frame is useful for responsive layout work. Final GPS, camera, iOS Safari, and safe-area behavior still needs a physical iPhone using the HTTPS Netlify site (or another HTTPS test URL).
 
 ## Data workflow
 

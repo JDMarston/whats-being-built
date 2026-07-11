@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
+    "mobile:open": "node scripts/open-mobile-preview.mjs",
     "build": "tsc -b && vite build",
     "check:ui": "node scripts/check-ui-source.mjs",
     "check:data": "node scripts/check-data-ingestion.mjs",

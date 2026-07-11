@@ -490,6 +490,7 @@ export default function MapView({
     mapView.onReady(() => {
       updateFloatingMapOptionsAnchor();
       showLocationPrompt();
+      mapView.fitToProjects(visibleProjects.map((project) => [project.lng as number, project.lat as number]));
       applyImageryMode();
     });
     mapView.onViewChangeEnd(() => {

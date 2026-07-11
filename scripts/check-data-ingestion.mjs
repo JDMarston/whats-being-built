@@ -4,6 +4,7 @@ const requiredFiles = [
   'data/source-registry.json',
   'data/staged-project-candidates.json',
   'data/geocoding-provider-registry.json',
+  'data/area-registry.json',
   'scripts/ingest-sources.mjs',
   'scripts/review-candidates.mjs',
   'scripts/geocode-candidates.mjs',
@@ -22,13 +23,22 @@ if (existsSync('data/source-registry.json')) {
   registry = JSON.parse(readFileSync('data/source-registry.json', 'utf8'));
 }
 
+let areas = [];
+if (existsSync('data/area-registry.json')) {
+  areas = JSON.parse(readFileSync('data/area-registry.json', 'utf8'));
+}
+
 checks.push(['source registry has at least 5 source definitions', Array.isArray(registry) && registry.length >= 5]);
+checks.push(['area registry defines starter and worldwide scope', Array.isArray(areas) && areas.some((area) => area.id === 'st-pete-fl' && area.role === 'starter_area') && areas.some((area) => area.id === 'global' && area.role === 'product_scope')]);
 checks.push(['source registry prefers public/API/feed-friendly sources', registry.every((source) => (
   source.id &&
   source.name &&
   source.url &&
   ['open_data', 'public_page', 'rss', 'agenda'].includes(source.kind) &&
-  source.scrapePolicy === 'respect_robots_and_terms'
+  source.scrapePolicy === 'respect_robots_and_terms' &&
+  source.area_id &&
+  source.adapter &&
+  source.promotionMode === 'manual_review'
 ))]);
 
 let candidates = [];
@@ -64,9 +74,10 @@ checks.push(['promoted staged candidates include map coordinates and promoted pr
 checks.push(['duplicate staged candidates link to an existing project id', candidates
   .filter((candidate) => candidate.review_status === 'duplicate')
   .every((candidate) => typeof candidate.duplicate_of_project_id === 'string' && candidate.duplicate_of_project_id.length > 0)]);
-checks.push(['staged candidates include source links and confidence scores', candidates.every((candidate) => (
+checks.push(['staged candidates include source links, area ids, and confidence scores', candidates.every((candidate) => (
   requiredCandidateFields.every((field) => Object.hasOwn(candidate, field)) &&
   typeof candidate.source_url === 'string' &&
+  typeof candidate.area_id === 'string' &&
   candidate.source_url.startsWith('https://') &&
   typeof candidate.confidence === 'number' &&
   candidate.confidence >= 0 &&
@@ -117,6 +128,7 @@ if (existsSync('scripts/geocode-candidates.mjs')) {
 if (existsSync('scripts/ingest-sources.mjs')) {
   const ingestScript = readFileSync('scripts/ingest-sources.mjs', 'utf8');
   checks.push(['ingest script fetches candidate detail pages for enrichment', ingestScript.includes('enrichCandidateFromDetailPage') && ingestScript.includes('fetchDetailPages')]);
+  checks.push(['ingest script uses area registry and adapter keys for city expansion', ingestScript.includes('areaRegistryPath') && ingestScript.includes('source.adapter || source.id') && ingestScript.includes('area_id')]);
   checks.push(['ingest detail enrichment extracts address, developer, and article text', ['extracted_address', 'developer', 'detail_excerpt'].every((field) => ingestScript.includes(field))]);
   checks.push(['ingest detail enrichment preserves review state for existing candidates', ingestScript.includes('mergeExistingReviewState') && ingestScript.includes('review_status')]);
 }

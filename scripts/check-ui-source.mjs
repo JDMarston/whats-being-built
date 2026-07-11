@@ -13,7 +13,9 @@ const files = {
   readme: existsSync('README.md') ? readFileSync('README.md', 'utf8') : '',
   netlify: existsSync('netlify.toml') ? readFileSync('netlify.toml', 'utf8') : '',
   dataReview: existsSync('src/components/DataReviewDashboard.tsx') ? readFileSync('src/components/DataReviewDashboard.tsx', 'utf8') : '',
-  stagedCandidates: existsSync('src/lib/stagedCandidates.ts') ? readFileSync('src/lib/stagedCandidates.ts', 'utf8') : ''
+  stagedCandidates: existsSync('src/lib/stagedCandidates.ts') ? readFileSync('src/lib/stagedCandidates.ts', 'utf8') : '',
+  mobilePreview: existsSync('mobile-preview.html') ? readFileSync('mobile-preview.html', 'utf8') : '',
+  packageJson: readFileSync('package.json', 'utf8')
 };
 
 const checks = [
@@ -29,7 +31,7 @@ const checks = [
   ['Styles no longer reserve a grid row for top header', !files.styles.includes('grid-template-rows: auto 1fr')],
   ['App keeps intro short and focused on using the map, not explaining the hobby', files.app.includes('site-intro-card') && files.app.includes('Find nearby construction') && !files.app.includes('I hate not knowing')],
   ['Intro panel shows map data stats and review queue link', files.app.includes('intro-stat-grid') && files.app.includes('Review staged data')],
-  ['Search placeholder is written for sidewalk curiosity', files.search.includes('Search a project, address, or neighborhood')],
+  ['Search placeholder is written for sidewalk curiosity', files.search.includes('Search project, address, or area')],
   ['Field mode copy uses the product north star', files.field.includes("What's being built here?") && files.field.includes('point your phone')],
   ['Project sheet includes trust and source action affordances', files.sheet.includes('sheet-trust-card') && files.sheet.includes('Open source')],
   ['Index has social metadata for the hosted site', files.index.includes('og:title') && files.index.includes('whatsbeingbuilt.netlify.app')],
@@ -37,7 +39,9 @@ const checks = [
   ['Netlify config publishes the Vite dist build', files.netlify.includes('command = "npm run build"') && files.netlify.includes('publish = "dist"')],
   ['App routes /review to a data review dashboard', files.app.includes('isReviewDashboardRoute') && files.app.includes('<DataReviewDashboard')],
   ['Data review dashboard renders staged queue metrics and source links', files.dataReview.includes('review-dashboard') && files.dataReview.includes('Needs review') && files.dataReview.includes('Open source')],
-  ['Staged candidate library imports staged data and computes review priority', files.stagedCandidates.includes('staged-project-candidates.json') && files.stagedCandidates.includes('reviewPriority') && files.stagedCandidates.includes('needs_review')]
+  ['Staged candidate library imports staged data and computes review priority', files.stagedCandidates.includes('staged-project-candidates.json') && files.stagedCandidates.includes('reviewPriority') && files.stagedCandidates.includes('needs_review')],
+  ['Mobile layout lab includes phone presets, rotation, and map/review routes', files.mobilePreview.includes('390x844') && files.mobilePreview.includes('id="rotate"') && files.mobilePreview.includes('id="reviewRoute"')],
+  ['Package exposes the mobile layout lab opener', files.packageJson.includes('"mobile:open"') && files.packageJson.includes('open-mobile-preview.mjs')]
 ];
 
 const failed = checks.filter(([, passed]) => !passed);
