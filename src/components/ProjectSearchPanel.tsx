@@ -61,7 +61,7 @@ export default function ProjectSearchPanel({
           <input
             type="search"
             value={query}
-            placeholder="Search a project, address, or neighborhood"
+            placeholder="Search project, address, or area"
             onFocus={() => setIsOpen(true)}
             onChange={(event) => {
               setQuery(event.target.value);
@@ -73,27 +73,27 @@ export default function ProjectSearchPanel({
           List
         </button>
       </div>
-      <div className="status-filter" aria-label="Filter projects by status">
-        {statusFilterOptions.map((option) => (
-          <button
-            key={option.value}
-            type="button"
-            className={selectedStatus === option.value ? 'active' : undefined}
-            aria-pressed={selectedStatus === option.value}
-            onClick={() => {
-              onStatusChange(option.value);
-              setIsOpen(true);
-            }}
-          >
-            <span>{option.label}</span>
-            <span aria-hidden="true">{statusCounts.get(option.value) || 0}</span>
-          </button>
-        ))}
-      </div>
       <div className="project-list" hidden={!isOpen}>
         <div className="project-list-meta">
           <strong>{filteredProjects.length} projects</strong>
           <button type="button" onClick={() => setIsOpen(false)}>Done</button>
+        </div>
+        <div className="status-filter" aria-label="Filter projects by status">
+          {statusFilterOptions.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              className={selectedStatus === option.value ? 'active' : undefined}
+              aria-pressed={selectedStatus === option.value}
+              onClick={() => {
+                onStatusChange(option.value);
+                setIsOpen(true);
+              }}
+            >
+              <span>{option.label}</span>
+              <span aria-hidden="true">{statusCounts.get(option.value) || 0}</span>
+            </button>
+          ))}
         </div>
         {filteredProjects.length ? (
           <ul>

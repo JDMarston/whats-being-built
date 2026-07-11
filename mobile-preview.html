@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mobile Layout Lab · What's Being Built</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #0b1114;
+        color: #f2f6f4;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; min-height: 100vh; background: radial-gradient(circle at top, #1d3033, #0b1114 46%); }
+      header {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        min-height: 62px;
+        padding: 10px 16px;
+        border-bottom: 1px solid rgba(255,255,255,.12);
+        background: rgba(11,17,20,.92);
+        backdrop-filter: blur(14px);
+      }
+      h1 { margin: 0 auto 0 0; font-size: 1rem; }
+      label { display: flex; align-items: center; gap: 7px; color: #b8c5c2; font-size: .82rem; }
+      select, button, a {
+        min-height: 38px;
+        border: 1px solid rgba(255,255,255,.16);
+        border-radius: 10px;
+        padding: 0 12px;
+        color: #f2f6f4;
+        background: #192327;
+        font: inherit;
+      }
+      button, a { display: inline-flex; align-items: center; justify-content: center; cursor: pointer; text-decoration: none; }
+      button:hover, a:hover { border-color: #79d7bf; }
+      main { display: grid; justify-items: center; gap: 12px; padding: 20px; overflow: auto; }
+      .device-meta { color: #b8c5c2; font-size: .82rem; }
+      .device-shell {
+        position: relative;
+        flex: none;
+        overflow: hidden;
+        border: 10px solid #050708;
+        border-radius: 34px;
+        background: #050708;
+        box-shadow: 0 28px 80px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.15);
+      }
+      .device-shell::before {
+        content: "";
+        position: absolute;
+        z-index: 2;
+        top: 7px;
+        left: 50%;
+        width: 82px;
+        height: 20px;
+        border-radius: 999px;
+        background: #050708;
+        transform: translateX(-50%);
+        pointer-events: none;
+      }
+      iframe { display: block; width: 390px; height: 844px; border: 0; background: #111; }
+      .hint { max-width: 680px; margin: 0; color: #94a6a2; font-size: .8rem; text-align: center; }
+      @media (max-width: 720px) {
+        header { position: static; }
+        main { justify-items: start; padding: 12px; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Mobile layout lab</h1>
+      <label>
+        Device
+        <select id="devicePreset">
+          <option value="375x667">iPhone SE · 375 × 667</option>
+          <option value="390x844" selected>iPhone 14/15 · 390 × 844</option>
+          <option value="393x852">iPhone 15 Pro · 393 × 852</option>
+          <option value="430x932">iPhone Pro Max · 430 × 932</option>
+        </select>
+      </label>
+      <button id="rotate" type="button">Rotate</button>
+      <button id="homeRoute" type="button">Map</button>
+      <button id="reviewRoute" type="button">Review</button>
+      <a id="openDirect" href="/?mobile-test=1" target="_blank" rel="noreferrer">Open direct</a>
+    </header>
+    <main>
+      <div id="deviceMeta" class="device-meta">iPhone 14/15 · portrait · 390 × 844 CSS px</div>
+      <div class="device-shell">
+        <iframe id="preview" title="What's Being Built mobile preview" src="/?mobile-test=1"></iframe>
+      </div>
+      <p class="hint">This frame gives the app a real phone-sized CSS viewport. Use a physical iPhone or the Netlify URL for final Safari, GPS, camera, and safe-area testing.</p>
+    </main>
+    <script>
+      const preset = document.querySelector('#devicePreset');
+      const preview = document.querySelector('#preview');
+      const shell = document.querySelector('.device-shell');
+      const meta = document.querySelector('#deviceMeta');
+      const openDirect = document.querySelector('#openDirect');
+      let landscape = false;
+      let route = '/';
+
+      function selectedLabel() {
+        return preset.options[preset.selectedIndex].text.split(' · ')[0];
+      }
+
+      function updatePreview() {
+        const [presetWidth, presetHeight] = preset.value.split('x').map(Number);
+        const width = landscape ? presetHeight : presetWidth;
+        const height = landscape ? presetWidth : presetHeight;
+        preview.style.width = `${width}px`;
+        preview.style.height = `${height}px`;
+        shell.style.borderRadius = landscape ? '28px' : '34px';
+        meta.textContent = `${selectedLabel()} · ${landscape ? 'landscape' : 'portrait'} · ${width} × ${height} CSS px`;
+        const url = `${route}?mobile-test=1`;
+        if (preview.getAttribute('src') !== url) preview.setAttribute('src', url);
+        openDirect.href = url;
+      }
+
+      preset.addEventListener('change', updatePreview);
+      document.querySelector('#rotate').addEventListener('click', () => { landscape = !landscape; updatePreview(); });
+      document.querySelector('#homeRoute').addEventListener('click', () => { route = '/'; updatePreview(); });
+      document.querySelector('#reviewRoute').addEventListener('click', () => { route = '/review'; updatePreview(); });
+      updatePreview();
+    </script>
+  </body>
+</html>

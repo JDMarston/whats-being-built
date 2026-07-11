@@ -1,0 +1,45 @@
+[
+  {
+    "id": "st-pete-fl",
+    "name": "St. Petersburg",
+    "region": "Florida",
+    "country": "US",
+    "role": "starter_area",
+    "addressContext": "St. Petersburg, FL",
+    "bbox": [
+      27.6,
+      -82.86,
+      27.94,
+      -82.55
+    ],
+    "bboxOrder": "south,west,north,east",
+    "notes": "First seeded area; the app and ingestion pipeline should not hard-code this as the only city."
+  },
+  {
+    "id": "tampa-bay-fl",
+    "name": "Tampa Bay",
+    "region": "Florida",
+    "country": "US",
+    "role": "near_term_expansion_area",
+    "addressContext": "Tampa Bay, FL",
+    "bbox": [
+      27.55,
+      -83.05,
+      28.25,
+      -82.0
+    ],
+    "bboxOrder": "south,west,north,east",
+    "notes": "Near-term regional expansion area for county/city imagery and public records."
+  },
+  {
+    "id": "global",
+    "name": "Worldwide",
+    "region": "",
+    "country": "",
+    "role": "product_scope",
+    "addressContext": "",
+    "bbox": null,
+    "bboxOrder": "south,west,north,east",
+    "notes": "Product scope: sources and map data should be attachable to any city/country once an adapter exists."
+  }
+]
