@@ -36,6 +36,7 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .search-input-wrap input::placeholder { color: var(--muted); font-size: 0.85rem; }
 .search-input-wrap input:focus { outline: 2px solid var(--accent); outline-offset: -2px; }
 .list-toggle { background: var(--panel); box-shadow: var(--shadow); font-size: 0.8rem; }
+.list-toggle:hover, .list-toggle[aria-expanded="true"] { background: #253840; color: var(--text); }
 .project-list { margin-top: 8px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel-strong); overflow: hidden; box-shadow: var(--shadow); }
 .project-list-meta, .panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 10px; font-size: 0.8rem; }
 .project-list-meta button, .panel-heading button { background: none; border: 0; }

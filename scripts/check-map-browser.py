@@ -83,6 +83,7 @@ with sync_playwright() as p:
                 page.keyboard.press('Escape')
             page.get_by_role('button',name='List',exact=True).click()
             expect(page.locator('.list-toggle')).to_have_attribute('aria-expanded','true')
+            expect(page.locator('.list-toggle')).to_have_css('background-color','rgb(37, 56, 64)')
             snapshot(page,label+'-list')
             page.get_by_role('searchbox').fill('not-a-real-project-name')
             expect(page.locator('.empty-list')).to_be_visible()
