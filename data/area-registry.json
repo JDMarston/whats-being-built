@@ -1,0 +1,28 @@
+[
+  {
+    "id": "st-pete-fl",
+    "name": "St. Petersburg",
+    "region": "Florida",
+    "country": "US",
+    "addressContext": "St. Petersburg, FL",
+    "bbox": [
+      27.6,
+      -82.86,
+      27.94,
+      -82.55
+    ]
+  },
+  {
+    "id": "tampa-bay-fl",
+    "name": "Tampa Bay",
+    "region": "Florida",
+    "country": "US",
+    "addressContext": "Tampa Bay, FL",
+    "bbox": [
+      27.55,
+      -83.05,
+      28.25,
+      -82.0
+    ]
+  }
+]

@@ -6,3 +6,13 @@
   from = "/*"
   to = "/index.html"
   status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; base-uri 'self'; connect-src 'self' https://server.arcgisonline.com https://services.arcgisonline.com https://tile.openstreetmap.org https://egis.pinellas.gov https://maps.hillsboroughcounty.org https://tiles.openfreemap.org https://demotiles.maplibre.org; font-src 'self' data: https://tiles.openfreemap.org; frame-ancestors 'self'; frame-src 'self'; img-src 'self' data: blob: https://server.arcgisonline.com https://services.arcgisonline.com https://tile.openstreetmap.org https://egis.pinellas.gov https://maps.hillsboroughcounty.org https://tiles.openfreemap.org https://demotiles.maplibre.org; object-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:; child-src 'self' blob:; form-action 'self'; upgrade-insecure-requests"
+    Permissions-Policy = "camera=(self), geolocation=(self), microphone=(), payment=(), usb=()"
+    Referrer-Policy = "no-referrer"
+    Strict-Transport-Security = "max-age=31536000"
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "SAMEORIGIN"

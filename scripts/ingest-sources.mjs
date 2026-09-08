@@ -1,10 +1,13 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 
 const registryPath = new URL('../data/source-registry.json', import.meta.url);
+const areaRegistryPath = new URL('../data/area-registry.json', import.meta.url);
 const outputPath = new URL('../data/staged-project-candidates.json', import.meta.url);
 
 const USER_AGENT = 'WhatsBeingBuiltSourceIngest/0.1 (+https://whatsbeingbuilt.netlify.app/)';
 const TODAY = new Date().toISOString().slice(0, 10);
+const FETCH_TIMEOUT_MS = 20_000;
+const MAX_RESPONSE_BYTES = 5_000_000;
 
 function slugify(value) {
   return value
@@ -31,17 +34,44 @@ function stripTags(value) {
   return decodeHtml(value.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim());
 }
 
-function absoluteUrl(url, baseUrl) {
-  if (!url) return baseUrl;
-  return new URL(decodeHtml(url), baseUrl).toString();
+function hostMatchesSource(hostname, sourceHostname) {
+  return hostname === sourceHostname
+    || hostname === `www.${sourceHostname}`
+    || sourceHostname === `www.${hostname}`;
 }
 
-function addressFromName(name) {
-  return /^\d+\s+/.test(name) ? `${name}, St. Petersburg, FL` : '';
+function isPrivateHostname(hostname) {
+  const normalized = hostname.toLowerCase().replace(/^\[|\]$/g, '');
+  if (normalized === 'localhost' || normalized === '::1' || normalized.endsWith('.local')) return true;
+  if (/^127\./.test(normalized) || /^10\./.test(normalized) || /^169\.254\./.test(normalized) || /^192\.168\./.test(normalized)) return true;
+  const match = normalized.match(/^172\.(\d{1,3})\./);
+  return Boolean(match && Number(match[1]) >= 16 && Number(match[1]) <= 31);
+}
+
+function trustedSourceUrl(value, baseUrl, fallback = baseUrl) {
+  if (!value) return fallback;
+  try {
+    const base = new URL(baseUrl);
+    const resolved = new URL(decodeHtml(value), base);
+    if (resolved.protocol !== 'https:' || resolved.username || resolved.password) return fallback;
+    if (isPrivateHostname(resolved.hostname) || !hostMatchesSource(resolved.hostname, base.hostname)) return fallback;
+    return resolved.toString();
+  } catch {
+    return fallback;
+  }
+}
+
+function areaContextForSource(source) {
+  return source.addressContext || source.area || '';
+}
+
+function addressFromName(name, source) {
+  const context = areaContextForSource(source);
+  return /^\d+\s+/.test(name) && context ? `${name}, ${context}` : '';
 }
 
 function candidateFromListing({ source, name, detailUrl, imageUrl }) {
-  const address = addressFromName(name);
+  const address = addressFromName(name, source);
   const confidence = address ? 0.65 : 0.55;
   const id = `${source.id}-${slugify(name)}`;
   return {
@@ -49,6 +79,8 @@ function candidateFromListing({ source, name, detailUrl, imageUrl }) {
     source_id: source.id,
     source_name: source.name,
     source_url: detailUrl || source.url,
+    area_id: source.area_id || 'global',
+    area_name: source.area || source.addressContext || '',
     name,
     address,
     extracted_address: '',
@@ -59,7 +91,7 @@ function candidateFromListing({ source, name, detailUrl, imageUrl }) {
     lng: null,
     status: 'under_construction',
     category: 'unknown',
-    summary: `Potential project from ${source.name}. Needs manual review for address, coordinates, category, and construction details before publishing.`,
+    summary: `${source.name} lists ${name} as under construction.`,
     image_url: imageUrl || null,
     confidence,
     review_status: 'needs_review',
@@ -85,8 +117,8 @@ function parseStPeteRisingUnderConstruction(html, source) {
     candidates.push(candidateFromListing({
       source,
       name,
-      detailUrl: detailMatch ? absoluteUrl(detailMatch[1], source.url) : source.url,
-      imageUrl: imageMatch ? absoluteUrl(imageMatch[1], source.url) : null
+      detailUrl: detailMatch ? trustedSourceUrl(detailMatch[1], source.url) : source.url,
+      imageUrl: imageMatch ? trustedSourceUrl(imageMatch[1], source.url, null) : null
     }));
   }
 
@@ -103,18 +135,28 @@ function dedupeCandidates(candidates) {
 }
 
 async function fetchText(url) {
-  const response = await fetch(url, {
+  const safeUrl = trustedSourceUrl(url, url, null);
+  if (!safeUrl) throw new Error('Refusing an untrusted source URL');
+
+  const response = await fetch(safeUrl, {
     headers: {
       'user-agent': USER_AGENT,
       accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
-    }
+    },
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS)
   });
 
+  const finalUrl = trustedSourceUrl(response.url, safeUrl, null);
+  if (!finalUrl) throw new Error('Source redirected to an untrusted host');
   if (!response.ok) {
-    throw new Error(`Fetch failed for ${url}: ${response.status} ${response.statusText}`);
+    throw new Error(`Fetch failed: ${response.status} ${response.statusText}`);
   }
 
-  return response.text();
+  const declaredLength = Number(response.headers.get('content-length') || 0);
+  if (declaredLength > MAX_RESPONSE_BYTES) throw new Error('Source response is too large');
+  const text = await response.text();
+  if (Buffer.byteLength(text, 'utf8') > MAX_RESPONSE_BYTES) throw new Error('Source response is too large');
+  return text;
 }
 
 function articleTextFromHtml(html) {
@@ -138,7 +180,7 @@ function cleanExtractedAddress(address) {
     .trim();
 }
 
-function extractAddressFromText(text) {
+function extractAddressFromText(text, source) {
   const candidates = [
     ...text.matchAll(/\b\d{2,6}\s+(?:[A-Za-z0-9]+\s+){0,5}(?:Street|St\.?|Avenue|Ave\.?|Road|Rd\.?|Boulevard|Blvd\.?|Drive|Dr\.?|Lane|Ln\.?|Court|Ct\.?|Way|Place|Pl\.?|Terrace|Ter\.?)\s*(?:North|South|East|West|N\.?|S\.?|E\.?|W\.?)?/gi)
   ].map((match) => cleanExtractedAddress(match[0]));
@@ -160,7 +202,8 @@ function extractAddressFromText(text) {
     return score(b) - score(a);
   });
 
-  return filtered[0] ? `${filtered[0]}, St. Petersburg, FL` : '';
+  const context = areaContextForSource(source);
+  return filtered[0] && context ? `${filtered[0]}, ${context}` : '';
 }
 
 function extractDeveloperFromText(text) {
@@ -187,9 +230,9 @@ function excerptForCandidate(text, candidate) {
   return text.slice(start, start + 420).replace(/\s+/g, ' ').trim();
 }
 
-function enrichCandidateFromDetailPage(candidate, html) {
+function enrichCandidateFromDetailPage(candidate, html, source) {
   const articleText = articleTextFromHtml(html);
-  const extracted_address = candidate.address || extractAddressFromText(articleText);
+  const extracted_address = candidate.address || extractAddressFromText(articleText, source || candidate);
   const developer = extractDeveloperFromText(articleText);
   const detail_excerpt = excerptForCandidate(articleText, candidate);
   const enrichedAddress = candidate.address || extracted_address;
@@ -218,6 +261,11 @@ function mergeExistingReviewState(candidate, existingCandidate) {
     'rejected_reason',
     'lat',
     'lng',
+    'extracted_address',
+    'developer',
+    'detail_excerpt',
+    'detail_fetched_at',
+    'detail_error',
     'geocode_status',
     'geocode_provider',
     'geocode_query',
@@ -234,7 +282,7 @@ function mergeExistingReviewState(candidate, existingCandidate) {
   return merged;
 }
 
-async function fetchDetailPages(candidates, { limit = Number.POSITIVE_INFINITY } = {}) {
+async function fetchDetailPages(candidates, sourceById, { limit = Number.POSITIVE_INFINITY } = {}) {
   const enriched = [];
   let fetched = 0;
 
@@ -247,7 +295,7 @@ async function fetchDetailPages(candidates, { limit = Number.POSITIVE_INFINITY }
 
     try {
       const html = await fetchText(candidate.source_url);
-      enriched.push(enrichCandidateFromDetailPage(candidate, html));
+      enriched.push(enrichCandidateFromDetailPage(candidate, html, sourceById.get(candidate.source_id)));
       fetched += 1;
       console.log(`detail: enriched ${candidate.id}`);
     } catch (error) {
@@ -281,12 +329,17 @@ const adapters = {
 
 async function main() {
   const registry = JSON.parse(readFileSync(registryPath, 'utf8'));
-  const enabledSources = registry.filter((source) => source.enabled);
+  const areas = JSON.parse(readFileSync(areaRegistryPath, 'utf8'));
+  const areaById = new Map(areas.map((area) => [area.id, area]));
+  const sourceById = new Map(registry.map((source) => [source.id, source]));
+  const enabledSources = registry
+    .filter((source) => source.enabled)
+    .map((source) => ({ ...areaById.get(source.area_id), ...source }));
   const stagedCandidates = [];
   const existingCandidates = loadExistingCandidates();
 
   for (const source of enabledSources) {
-    const adapter = adapters[source.id];
+    const adapter = adapters[source.adapter || source.id];
     if (!adapter) {
       console.warn(`No adapter for enabled source ${source.id}; skipping`);
       continue;
@@ -299,7 +352,7 @@ async function main() {
 
   const uniqueCandidates = dedupeCandidates(stagedCandidates)
     .sort((a, b) => a.name.localeCompare(b.name));
-  const enrichedCandidates = await fetchDetailPages(uniqueCandidates, { limit: Number(process.env.WBB_DETAIL_LIMIT || 8) });
+  const enrichedCandidates = await fetchDetailPages(uniqueCandidates, sourceById, { limit: Number(process.env.WBB_DETAIL_LIMIT || 8) });
   const mergedCandidates = enrichedCandidates.map((candidate) => mergeExistingReviewState(candidate, existingCandidates.get(candidate.id)));
 
   mkdirSync(new URL('../data/', import.meta.url), { recursive: true });

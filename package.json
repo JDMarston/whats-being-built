@@ -1,12 +1,15 @@
 {
   "name": "whats-being-built",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
-    "build": "tsc -b && vite build",
-    "check:ui": "node scripts/check-ui-source.mjs",
+    "mobile:open": "node scripts/open-mobile-preview.mjs",
+    "check": "npm run check:types && npm run check:data && npm run check:map",
+    "check:map": "node --experimental-strip-types --test scripts/check-map.mjs",
+    "check:types": "tsc --noEmit",
+    "build": "tsc --noEmit && vite build",
     "check:data": "node scripts/check-data-ingestion.mjs",
     "ingest:sources": "node scripts/ingest-sources.mjs",
     "preview": "vite preview --host 0.0.0.0",
@@ -21,9 +24,9 @@
   "devDependencies": {
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^5.0.0",
-    "playwright-core": "^1.60.0",
+    "@vitejs/plugin-react": "^6.0.3",
     "typescript": "^5.9.3",
-    "vite": "^7.2.0"
-  }
+    "vite": "^8.1.5"
+  },
+  "description": "A map of construction projects, starting in St. Petersburg, Florida."
 }

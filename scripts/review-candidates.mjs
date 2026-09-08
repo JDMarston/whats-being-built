@@ -27,6 +27,20 @@ function normalizeUrl(value) {
   return String(value || '').trim().replace(/\/$/, '').toLowerCase();
 }
 
+function validHttpsUrl(value) {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' && !url.username && !url.password;
+  } catch {
+    return false;
+  }
+}
+
+function validCoordinates(lat, lng) {
+  return Number.isFinite(lat) && Number.isFinite(lng)
+    && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+}
+
 function sourceUrlsForProject(project) {
   return new Set((project.sources || []).map((source) => normalizeUrl(source.url)).filter(Boolean));
 }
@@ -65,8 +79,8 @@ function assertCanPromote(candidate) {
   for (const field of ['id', 'name', 'address', 'status', 'summary', 'last_seen', 'source_url']) {
     if (!candidate[field]) missing.push(field);
   }
-  if (typeof candidate.lat !== 'number') missing.push('lat');
-  if (typeof candidate.lng !== 'number') missing.push('lng');
+  if (!validCoordinates(candidate.lat, candidate.lng)) missing.push('valid coordinates');
+  if (!validHttpsUrl(candidate.source_url)) missing.push('valid HTTPS source URL');
   if (!validStatuses.has(candidate.status)) missing.push('valid status');
   if (missing.length) {
     throw new Error(`Cannot promote ${candidate.id}; missing/invalid: ${missing.join(', ')}`);

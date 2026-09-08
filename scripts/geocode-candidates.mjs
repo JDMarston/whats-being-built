@@ -5,6 +5,21 @@ const candidatesPath = 'data/staged-project-candidates.json';
 const providerRegistryPath = 'data/geocoding-provider-registry.json';
 const userAgent = 'WhatsBeingBuiltGeocoder/0.1 (+https://whatsbeingbuilt.netlify.app/)';
 const today = new Date().toISOString().slice(0, 10);
+const fetchTimeoutMs = 20_000;
+const maxResponseBytes = 1_000_000;
+
+function trustedProviderEndpoint(provider) {
+  try {
+    const endpoint = new URL(provider.endpoint);
+    return endpoint.protocol === 'https:'
+      && !endpoint.username
+      && !endpoint.password
+      && provider.id === 'nominatim'
+      && endpoint.hostname === 'nominatim.openstreetmap.org';
+  } catch {
+    return false;
+  }
+}
 
 function parseArgs(argv) {
   const args = {
@@ -155,11 +170,19 @@ async function geocodeWithNominatim(candidate, provider) {
     countrycodes: 'us'
   });
   const response = await fetch(`${provider.endpoint}?${params}`, {
-    headers: { 'user-agent': userAgent }
+    headers: { 'user-agent': userAgent },
+    signal: AbortSignal.timeout(fetchTimeoutMs)
   });
+  if (!trustedProviderEndpoint({ id: provider.id, endpoint: response.url })) {
+    throw new Error('Geocoder redirected to an untrusted host');
+  }
   if (!response.ok) throw new Error(`Geocode fetch failed for ${candidate.id}: ${response.status} ${response.statusText}`);
-
-  const results = await response.json();
+  const declaredLength = Number(response.headers.get('content-length') || 0);
+  if (declaredLength > maxResponseBytes) throw new Error('Geocode response is too large');
+  const responseText = await response.text();
+  if (Buffer.byteLength(responseText, 'utf8') > maxResponseBytes) throw new Error('Geocode response is too large');
+  const results = JSON.parse(responseText);
+  if (!Array.isArray(results)) throw new Error('Geocode response must be an array');
   const ranked = results
     .map((result) => ({ result, ...scoreNominatimResult(candidate, result, provider) }))
     .sort((a, b) => b.score - a.score);
@@ -214,6 +237,9 @@ async function main() {
   const provider = providers.find((item) => item.id === args.provider && item.enabled);
   if (!provider) {
     throw new Error(`Enabled geocoding provider not found: ${args.provider}`);
+  }
+  if (!trustedProviderEndpoint(provider)) {
+    throw new Error(`Refusing untrusted geocoding endpoint for ${provider.id}`);
   }
 
   const candidates = JSON.parse(readFileSync(candidatesPath, 'utf8'));

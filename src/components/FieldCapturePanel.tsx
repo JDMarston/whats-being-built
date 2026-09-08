@@ -11,9 +11,12 @@ function todayIsoDate(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+const allowedImageTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const maxPhotoBytes = 12_000_000;
+
 function readImageAsDataUrl(file: File): Promise<string | null> {
   return new Promise((resolve) => {
-    if (!file.type.startsWith('image/')) {
+    if (!allowedImageTypes.has(file.type) || file.size > maxPhotoBytes) {
       resolve(null);
       return;
     }
@@ -27,12 +30,12 @@ function readImageAsDataUrl(file: File): Promise<string | null> {
 export default function FieldCapturePanel({ onProjectCreate }: FieldCapturePanelProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [status, setStatus] = useState<CaptureStatus>('idle');
-  const [message, setMessage] = useState('point your phone at a mystery construction site and save where you are standing.');
+  const [message, setMessage] = useState('Take a photo and save where you are standing.');
   const [lat, setLat] = useState<number | null>(null);
   const [lng, setLng] = useState<number | null>(null);
   const [accuracy, setAccuracy] = useState<number | null>(null);
   const [name, setName] = useState('Unknown construction site');
-  const [notes, setNotes] = useState('Field photo/site visit: early sitework, grading, utility or prep work visible. Needs permit lookup.');
+  const [notes, setNotes] = useState('');
   const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
 
   const canSave = useMemo(() => Number.isFinite(lat) && Number.isFinite(lng), [lat, lng]);
@@ -70,10 +73,22 @@ export default function FieldCapturePanel({ onProjectCreate }: FieldCapturePanel
 
   async function handlePhotoChange(file: File | undefined) {
     if (!file) return;
+    if (!allowedImageTypes.has(file.type)) {
+      setPhotoDataUrl(null);
+      setMessage('Use a JPEG, PNG, or WebP photo.');
+      return;
+    }
+    if (file.size > maxPhotoBytes) {
+      setPhotoDataUrl(null);
+      setMessage('That photo is over 12 MB. Choose a smaller image.');
+      return;
+    }
     const dataUrl = await readImageAsDataUrl(file);
     setPhotoDataUrl(dataUrl);
     if (dataUrl) {
       setMessage('Photo attached locally. Capture GPS before saving the site so it can be matched later.');
+    } else {
+      setMessage('The photo could not be read. Try another image.');
     }
   }
 
@@ -97,7 +112,7 @@ export default function FieldCapturePanel({ onProjectCreate }: FieldCapturePanel
       built: null,
       expected_open: null,
       last_verified: capturedAt,
-      summary: notes.trim() || 'Field capture from phone. Needs permit lookup.',
+      summary: notes.trim() || 'Photo and location saved at the site. Project details still need to be checked.',
       sources: [],
       photoDataUrl,
       capturedAt,
@@ -105,7 +120,7 @@ export default function FieldCapturePanel({ onProjectCreate }: FieldCapturePanel
     };
     onProjectCreate(project);
     setStatus('ready');
-    setMessage('Saved as a local field-capture pin. Next step: permit lookup / identify project.');
+    setMessage('Saved on this device.');
     setIsOpen(false);
   }
 
@@ -122,20 +137,20 @@ export default function FieldCapturePanel({ onProjectCreate }: FieldCapturePanel
           </div>
           <label>
             Name
-            <input value={name} onChange={(event) => setName(event.target.value)} />
+            <input value={name} maxLength={120} onChange={(event) => setName(event.target.value)} />
           </label>
           <label>
             Notes
-            <textarea value={notes} rows={4} onChange={(event) => setNotes(event.target.value)} />
+            <textarea value={notes} rows={4} maxLength={1000} placeholder="What can you see?" onChange={(event) => setNotes(event.target.value)} />
           </label>
           <label>
             Photo
-            <input type="file" accept="image/*" capture="environment" onChange={(event) => handlePhotoChange(event.target.files?.[0])} />
+            <input type="file" accept="image/jpeg,image/png,image/webp" capture="environment" onChange={(event) => handlePhotoChange(event.target.files?.[0])} />
           </label>
           {photoDataUrl ? <img className="field-capture-preview" src={photoDataUrl} alt="Attached field capture" /> : null}
           <div className="field-capture-location">
-            <span>{lat && lng ? `${lat.toFixed(6)}, ${lng.toFixed(6)}` : 'No GPS captured yet'}</span>
-            {accuracy ? <span>±{Math.round(accuracy)}m</span> : null}
+            <span>{Number.isFinite(lat) && Number.isFinite(lng) ? `${lat!.toFixed(6)}, ${lng!.toFixed(6)}` : 'No GPS captured yet'}</span>
+            {Number.isFinite(accuracy) ? <span>±{Math.round(accuracy!)}m</span> : null}
           </div>
           <div className="field-capture-actions">
             <button type="button" onClick={locateNow} className={status === 'locating' ? 'active' : undefined}>

@@ -1,8 +1,5 @@
 export type LocalAerialLayer = {
   id: string;
-  optionLabel: string;
-  note: string;
-  autoNote: string;
   dateLabel: string;
   sourceLabel: string;
   resolutionLabel?: string;
@@ -26,9 +23,6 @@ export const imageryMetadataUrl = 'https://services.arcgisonline.com/ArcGIS/rest
 export const localAerialImagery: LocalAerialLayer[] = [
   {
     id: 'pinellas-2025',
-    optionLabel: 'Pinellas 2025 detail',
-    note: 'Pinellas 2025 detail over global imagery',
-    autoNote: 'Pinellas 2025 local aerials',
     dateLabel: '2025',
     sourceLabel: 'Pinellas County Enterprise GIS',
     resolutionLabel: '0.08 m',
@@ -44,9 +38,6 @@ export const localAerialImagery: LocalAerialLayer[] = [
   },
   {
     id: 'hillsborough-2025',
-    optionLabel: 'Hillsborough 2025 detail',
-    note: 'Hillsborough 2025 detail over global imagery',
-    autoNote: 'Hillsborough 2025 local aerials',
     dateLabel: 'Jan 2025',
     sourceLabel: 'Hillsborough County Geospatial Services',
     resolutionLabel: '0.15 m',
@@ -62,9 +53,6 @@ export const localAerialImagery: LocalAerialLayer[] = [
   },
   {
     id: 'pinellas-2024',
-    optionLabel: 'Pinellas 2024 detail',
-    note: 'Pinellas 2024 detail over global imagery',
-    autoNote: 'Pinellas 2024 local aerials',
     dateLabel: '2024',
     sourceLabel: 'Pinellas County Enterprise GIS',
     dateRank: 2024,
@@ -80,12 +68,6 @@ export const localAerialImagery: LocalAerialLayer[] = [
 ];
 
 export const localAerialLayerIds = localAerialImagery.map((layer) => layer.id);
-
-export const imageryNotes: Record<string, string> = {
-  satellite: 'Newest aerial imagery when available',
-  'satellite-streets': 'Newest aerial imagery with street map overlay',
-  'street-map': 'Street map'
-};
 
 export function localAerialById(id: string): LocalAerialLayer | undefined {
   return localAerialImagery.find((layer) => layer.id === id);
