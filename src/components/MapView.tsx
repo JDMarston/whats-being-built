@@ -1,539 +1,253 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import maplibregl from 'maplibre-gl';
-import type { ImageryMode, LocalAerialLayer } from '../lib/imageryLayers';
-import {
-  globalImageryLayerId,
-  imageryMetadataUrl,
-  imageryNotes,
-  localAerialById,
-  localAerialImagery
-} from '../lib/imageryLayers';
-import { shouldShowProject, statusClass, type Project } from '../lib/projects';
-import { createMapLibreMap, createMapProvider, type MapViewProvider } from '../lib/mapProvider';
+import { imageryMetadataUrl, localAerialImagery, type ImageryMode } from '../lib/imageryLayers';
+import { hasCoordinates, type Project } from '../lib/projects';
+import { centerOnProject, createMapLibreMap, set3DMode, setImageryVisibility } from '../lib/mapProvider';
+import type { UserLocation } from '../lib/nearby';
+import { headingFromReading, normalizeDegrees, smoothHeading } from '../lib/orientation';
 
-type ImageryBadgeState = {
-  dateText: string;
-  sourceText: string;
-};
-
-type MapViewProps = {
-  projects: Project[];
-  selectedProject: Project | null;
-  selectedImageryMode: ImageryMode;
-  is3DEnabled: boolean;
+type Badge = { dateText: string; sourceText: string };
+type Props = {
+  projects: Project[]; selectedProject: Project | null; selectedImageryMode: ImageryMode;
+  is3DEnabled: boolean; overviewRequest: number;
   onProjectSelect: (project: Project) => void;
-  onProjectCountChange: (text: string) => void;
-  onImageryNoteChange: (text: string) => void;
-  onImageryBadgeChange: (badge: ImageryBadgeState) => void;
+  onUserLocationChange: (location: UserLocation | null) => void;
+  onImageryBadgeChange: (badge: Badge) => void;
 };
 
-function formatResolution(meters: unknown): string {
-  const value = Number(meters);
-  if (!Number.isFinite(value) || value <= 0) return '';
-  return value < 1 ? `${Math.round(value * 100)} cm` : `${value.toFixed(value < 10 ? 1 : 0)} m`;
+function projectData(projects: Project[]): GeoJSON.FeatureCollection<GeoJSON.Point> {
+  return { type: 'FeatureCollection', features: projects.filter(hasCoordinates).map(project => ({
+    type: 'Feature', geometry: { type: 'Point', coordinates: [project.lng!, project.lat!] },
+    properties: { id: project.id, status: project.status, name: project.name }
+  })) };
 }
 
-function formatEsriDate(attributes: Record<string, unknown>): string {
-  if (attributes.SRC_DATE2) {
-    const date = new Date(attributes.SRC_DATE2 as string | number);
-    if (!Number.isNaN(date.getTime())) {
-      return date.toLocaleDateString(undefined, {
-        month: 'short',
-        year: 'numeric',
-        timeZone: 'UTC'
-      });
-    }
-  }
-
-  const value = String(attributes.SRC_DATE || '');
-  if (/^\d{8}$/.test(value)) {
-    const date = new Date(Date.UTC(Number(value.slice(0, 4)), Number(value.slice(4, 6)) - 1, Number(value.slice(6, 8))));
-    return date.toLocaleDateString(undefined, {
-      month: 'short',
-      year: 'numeric',
-      timeZone: 'UTC'
-    });
-  }
-  return 'Date unavailable';
-}
-
-function describeEsriMetadata(attributes: Record<string, unknown>): string {
-  const pieces = [
-    attributes.SRC_DESC || attributes.NICE_NAME || 'Esri World Imagery',
-    formatResolution(attributes.SRC_RES),
-    attributes.ReleaseName
-  ].filter(Boolean);
-  return pieces.join(' - ');
-}
-
-function formatDistance(meters: number): string {
-  if (!Number.isFinite(meters) || meters <= 0) return 'unknown';
-  if (meters >= 1609) return `${(meters / 1609).toFixed(1)} mi`;
-  if (meters >= 305) return `${(meters / 1609).toFixed(2)} mi`;
-  return `${Math.round(meters)} m`;
-}
-
-function normalizeDegrees(degrees: number): number {
-  return ((degrees % 360) + 360) % 360;
-}
-
-function screenOrientationAngle(): number {
-  if (screen.orientation && typeof screen.orientation.angle === 'number') {
-    return screen.orientation.angle;
-  }
-  if (typeof window.orientation === 'number') {
-    return window.orientation;
-  }
-  return 0;
-}
-
-function headingFromDeviceEvent(event: DeviceOrientationEvent): number | null {
-  if (typeof event.webkitCompassHeading === 'number') {
-    return event.webkitCompassHeading;
-  }
-  if (typeof event.alpha !== 'number') {
-    return null;
-  }
-  return 360 - event.alpha + screenOrientationAngle();
-}
-
-export default function MapView({
-  projects,
-  selectedProject,
-  selectedImageryMode,
-  is3DEnabled,
-  onProjectSelect,
-  onProjectCountChange,
-  onImageryNoteChange,
-  onImageryBadgeChange
-}: MapViewProps) {
-  const mapContainerRef = useRef<HTMLDivElement | null>(null);
+export default function MapView(props: Props) {
+  const container = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
-  const mapViewRef = useRef<MapViewProvider | null>(null);
-  const applyImageryModeRef = useRef<(() => void) | null>(null);
-  const selectedImageryModeRef = useRef<ImageryMode>(selectedImageryMode);
-  const activeImageryModeRef = useRef('global-satellite');
-  const metadataAbortControllerRef = useRef<AbortController | null>(null);
-  const metadataRequestIdRef = useRef(0);
-
-  const visibleProjects = useMemo(
-    () => projects.filter(shouldShowProject).filter((project) => project.lat && project.lng),
-    [projects]
-  );
+  const latest = useRef(props); latest.current = props;
+  const [ready, setReady] = useState(false);
+  const last3D = useRef(props.is3DEnabled);
+  const [mapError, setMapError] = useState('');
+  const [locationStatus, setLocationStatus] = useState('');
+  const [locationWarning, setLocationWarning] = useState(false);
+  const applyImagery = useRef<() => void>(() => {});
 
   useEffect(() => {
-    selectedImageryModeRef.current = selectedImageryMode;
-    applyImageryModeRef.current?.();
-  }, [selectedImageryMode]);
-
-  useEffect(() => {
-    onProjectCountChange(`${visibleProjects.length} current projects`);
-  }, [onProjectCountChange, visibleProjects.length]);
-
-  useEffect(() => {
-    mapViewRef.current?.set3DMode(is3DEnabled);
-  }, [is3DEnabled]);
-
-  useEffect(() => {
-    if (!selectedProject || !selectedProject.lat || !selectedProject.lng) return;
-    mapViewRef.current?.centerOnProject([selectedProject.lng, selectedProject.lat]);
-  }, [selectedProject]);
-
-  useEffect(() => {
-    const container = mapContainerRef.current;
-    if (!container || mapRef.current) return;
-    const mapContainer = container;
-
-    const isMobile = window.matchMedia('(pointer: coarse), (max-width: 720px)').matches;
-    const mapControlsBottomOffset = 12;
-    const map = createMapLibreMap(container, isMobile);
+    if (!container.current) return;
+    const element = container.current;
+    const mobile = window.matchMedia('(pointer: coarse), (max-width: 720px)').matches;
+    let map: maplibregl.Map;
+    try { map = createMapLibreMap(element, mobile); }
+    catch { setMapError('The map could not start. Try reloading with WebGL enabled.'); return; }
     mapRef.current = map;
-    map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
+    let disposed = false;
+    const startedAt = performance.now();
+    map.addControl(new maplibregl.NavigationControl({ visualizePitch: true, showZoom: !mobile }), 'top-right');
     map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
-
-    let hasUserToggledAttribution = false;
-
-    function closeAutomaticAttribution() {
-      if (hasUserToggledAttribution) return;
-      const attribution = mapContainer.querySelector('.maplibregl-ctrl-attrib') as HTMLElement | null;
-      attribution?.classList.remove('maplibregl-compact-show');
-    }
-
-    function trackAttributionToggle() {
-      const attributionButton = mapContainer.querySelector('.maplibregl-ctrl-attrib-button') as HTMLElement | null;
-      attributionButton?.addEventListener('click', () => {
-        hasUserToggledAttribution = true;
-      }, { once: true });
-    }
-
-    closeAutomaticAttribution();
-    trackAttributionToggle();
-    map.on('styledata', closeAutomaticAttribution);
-    map.on('sourcedata', closeAutomaticAttribution);
-    map.on('resize', closeAutomaticAttribution);
-
-    const mapView = createMapProvider(map, isMobile);
-    mapViewRef.current = mapView;
-
-    let locationWatchId: number | null = null;
-    let userPuckElement: HTMLDivElement | null = null;
-    let latestUserHeading: number | null = null;
-    let hasCenteredOnUser = false;
-    let hasStartedHeading = false;
-    let hasReceivedUserLocation = false;
-    const locateButtons = new Set<HTMLButtonElement>();
-    const locationPrompt = document.getElementById('locationPrompt') as HTMLDivElement | null;
-    const locationPromptButton = document.getElementById('locationPromptButton') as HTMLButtonElement | null;
-    const locationStatus = document.getElementById('locationStatus') as HTMLSpanElement | null;
-    const headingListeners: Array<[string, EventListener]> = [];
-
-    function setImageryBadge(dateText: string, sourceText: string) {
-      onImageryBadgeChange({ dateText, sourceText });
-    }
-
-    function isLocalAerialVisible(layer: LocalAerialLayer): boolean {
-      const center = mapView.getCenter();
-      return mapView.getZoom() >= layer.minZoom &&
-        center.lng >= layer.bounds.west &&
-        center.lng <= layer.bounds.east &&
-        center.lat >= layer.bounds.south &&
-        center.lat <= layer.bounds.north;
-    }
-
-    function bestLocalAerialForView(): LocalAerialLayer | null {
-      return localAerialImagery
-        .filter(isLocalAerialVisible)
-        .sort((a, b) => b.dateRank - a.dateRank || b.priority - a.priority)[0] || null;
-    }
-
-    function visibleAerialMode(): string {
-      return bestLocalAerialForView()?.id || 'global-satellite';
-    }
-
-    async function updateGlobalImageryMetadata() {
-      const requestId = ++metadataRequestIdRef.current;
-      metadataAbortControllerRef.current?.abort();
-      metadataAbortControllerRef.current = new AbortController();
-
-      const center = mapView.getCenter();
-      const zoomLevel = Math.max(0, Math.min(20, Math.round(mapView.getZoom())));
-      const params = new URLSearchParams({
-        f: 'json',
-        geometry: `${center.lng},${center.lat}`,
-        geometryType: 'esriGeometryPoint',
-        inSR: '4326',
-        spatialRel: 'esriSpatialRelIntersects',
-        outFields: 'SRC_DATE,SRC_DATE2,SRC_RES,SRC_DESC,NICE_NAME,NICE_DESC,MinMapLevel,MaxMapLevel,DrawOrder,ReleaseName',
-        returnGeometry: 'false',
-        where: `MinMapLevel <= ${zoomLevel} AND MaxMapLevel >= ${zoomLevel}`,
-        orderByFields: 'DrawOrder DESC'
-      });
-
-      try {
-        const response = await fetch(`${imageryMetadataUrl}?${params}`, {
-          signal: metadataAbortControllerRef.current.signal
-        });
-        if (!response.ok) throw new Error(`Metadata request failed: ${response.status}`);
-        const data = await response.json() as { features?: Array<{ attributes?: Record<string, unknown> }> };
-        if (requestId !== metadataRequestIdRef.current || activeImageryModeRef.current !== 'global-satellite') return;
-
-        const attributes = data.features?.[0]?.attributes;
-        if (!attributes) {
-          setImageryBadge('Imagery date unavailable', 'Esri World Imagery metadata was not returned here');
-          return;
-        }
-
-        setImageryBadge(`Imagery: ${formatEsriDate(attributes)}`, describeEsriMetadata(attributes));
-      } catch (error) {
-        if (error instanceof DOMException && error.name === 'AbortError') return;
-        console.warn('Could not load imagery metadata', error);
-        if (requestId === metadataRequestIdRef.current && activeImageryModeRef.current === 'global-satellite') {
-          setImageryBadge('Imagery date unavailable', 'Esri World Imagery metadata request failed');
-        }
-      }
-    }
-
-    function updateImageryBadge() {
-      if (activeImageryModeRef.current === 'street-map') {
-        setImageryBadge('Street map', 'Imagery date not applicable');
-        return;
-      }
-
-      const localLayer = localAerialById(activeImageryModeRef.current);
-      if (localLayer) {
-        const details = [
-          localLayer.sourceLabel,
-          localLayer.resolutionLabel,
-          localLayer.dateLabel.length === 4 ? 'collection month not published in this service' : ''
-        ].filter(Boolean).join(' - ');
-        setImageryBadge(`Imagery: ${localLayer.dateLabel}`, details);
-        return;
-      }
-
-      setImageryBadge('Imagery date loading', 'Checking Esri World Imagery metadata');
-      updateGlobalImageryMetadata();
-    }
-
-    function applyImageryMode() {
-      if (!map.getLayer(globalImageryLayerId)) return;
-
-      const nextMode = selectedImageryModeRef.current === 'street-map' ? 'street-map' : visibleAerialMode();
-      const showStreetOverlay = selectedImageryModeRef.current === 'satellite-streets';
-
-      mapView.setImageryVisibility(nextMode, showStreetOverlay);
-      activeImageryModeRef.current = nextMode;
-
-      if (selectedImageryModeRef.current === 'satellite' || selectedImageryModeRef.current === 'satellite-streets') {
-        const aerialNote = localAerialById(nextMode)?.autoNote || 'Esri latest global imagery';
-        onImageryNoteChange(showStreetOverlay ? `${aerialNote} + street overlay` : aerialNote);
-      } else {
-        onImageryNoteChange(imageryNotes[selectedImageryModeRef.current]);
-      }
-
-      updateImageryBadge();
-    }
-
-    function renderUserHeading() {
-      if (!userPuckElement || latestUserHeading === null) return;
-      userPuckElement.classList.add('has-heading');
-      userPuckElement.style.setProperty('--heading', `${normalizeDegrees(latestUserHeading - mapView.getBearing())}deg`);
-    }
-
-    function ensureUserPuckElement(): HTMLDivElement {
-      if (userPuckElement) return userPuckElement;
-      userPuckElement = document.createElement('div');
-      userPuckElement.className = 'user-puck';
-      userPuckElement.setAttribute('aria-label', 'Your location');
-      renderUserHeading();
-      return userPuckElement;
-    }
-
-    function setUserHeading(degrees: number | null) {
-      if (degrees === null || Number.isNaN(degrees)) return;
-      latestUserHeading = normalizeDegrees(degrees);
-      renderUserHeading();
-    }
-
-    function setLocationButtonsActive(isActive: boolean) {
-      locateButtons.forEach((button) => button.classList.toggle('active', isActive));
-      locationPromptButton?.classList.toggle('active', isActive);
-    }
-
-    function updateLocationStatus(message: string) {
-      locationPrompt?.classList.remove('is-warning');
-      if (locationStatus) locationStatus.textContent = message;
-    }
-
-    function showLocationWarning(message: string) {
-      locationPrompt?.classList.add('is-visible', 'is-warning');
-      if (locationStatus) locationStatus.textContent = message;
-    }
-
-    function needsSecureLocationOrigin(): boolean {
-      return !window.isSecureContext;
-    }
-
-    function secureLocationMessage(): string {
-      return 'Location needs HTTPS on phones. If you are using your PC IP address, the browser can still reject GPS after you tap Allow.';
-    }
-
-    function unavailableLocationMessage(): string {
-      if (needsSecureLocationOrigin()) return secureLocationMessage();
-      return 'Location is not available in this browser.';
-    }
-
-    function showLocationPrompt(force = false) {
-      if (!isMobile || !locationPrompt || !locationPromptButton) return;
-      if ((locationWatchId !== null || hasReceivedUserLocation) && !force) return;
-      if (needsSecureLocationOrigin()) {
-        locationPromptButton.disabled = true;
-        updateLocationStatus(secureLocationMessage());
-      } else if (!navigator.geolocation) {
-        locationPromptButton.disabled = true;
-        updateLocationStatus(unavailableLocationMessage());
-      }
-      locationPrompt.classList.add('is-visible');
-    }
-
-    function hideLocationPrompt() {
-      locationPrompt?.classList.remove('is-visible', 'is-warning');
-    }
-
-    function updateLocationAccuracyStatus(accuracyMeters: number) {
-      if (!Number.isFinite(accuracyMeters) || accuracyMeters <= 0) {
-        showLocationWarning('Location found, but iPhone did not report accuracy.');
-        return;
-      }
-
-      if (accuracyMeters > 800) {
-        showLocationWarning(`iPhone reports accuracy about ${formatDistance(accuracyMeters)}. Turn on Precise Location for this browser, then tap again.`);
-        return;
-      }
-
-      if (accuracyMeters > 200) {
-        showLocationWarning(`Location is approximate, accuracy about ${formatDistance(accuracyMeters)}. Try tapping again near a window or outside.`);
-        return;
-      }
-
-      hideLocationPrompt();
-    }
-
-    function updateUserLocation(position: GeolocationPosition) {
-      hasReceivedUserLocation = true;
-      const lngLat: [number, number] = [position.coords.longitude, position.coords.latitude];
-      const accuracyMeters = Number(position.coords.accuracy);
-      mapView.setUserLocationMarker(ensureUserPuckElement(), lngLat);
-      updateLocationAccuracyStatus(accuracyMeters);
-      setLocationButtonsActive(true);
-      if (isMobile && typeof position.coords.heading === 'number') {
-        setUserHeading(position.coords.heading);
-      }
-      if (!hasCenteredOnUser) {
-        hasCenteredOnUser = true;
-        mapView.centerOnLocation(lngLat, accuracyMeters);
-      }
-    }
-
-    async function startMobileHeading() {
-      if (!isMobile || hasStartedHeading || !window.DeviceOrientationEvent) return;
-      hasStartedHeading = true;
-      try {
-        const orientationEvent = DeviceOrientationEvent as unknown as {
-          requestPermission?: () => Promise<'granted' | 'denied' | 'prompt'>;
-        };
-        if (typeof orientationEvent.requestPermission === 'function') {
-          const permission = await orientationEvent.requestPermission();
-          if (permission !== 'granted') return;
-        }
-        const updateHeading = ((event: DeviceOrientationEvent) => setUserHeading(headingFromDeviceEvent(event))) as EventListener;
-        window.addEventListener('deviceorientationabsolute', updateHeading, true);
-        window.addEventListener('deviceorientation', updateHeading, true);
-        window.addEventListener('orientationchange', renderUserHeading);
-        headingListeners.push(['deviceorientationabsolute', updateHeading], ['deviceorientation', updateHeading], ['orientationchange', renderUserHeading]);
-      } catch (error) {
-        console.warn('Device orientation unavailable', error);
-      }
-    }
-
-    function locationErrorMessage(error: GeolocationPositionError): string {
-      if (error.code === error.PERMISSION_DENIED) {
-        if (needsSecureLocationOrigin()) return secureLocationMessage();
-        return 'The browser denied location for this page. Try reloading and tapping Allow again.';
-      }
-      if (error.code === error.POSITION_UNAVAILABLE) {
-        return 'Location is unavailable right now.';
-      }
-      return 'Location timed out. Try again when GPS has a clearer signal.';
-    }
-
-    function handleLocationError(error: GeolocationPositionError) {
-      console.warn('Geolocation error', error);
-      if (error.code === error.PERMISSION_DENIED && locationWatchId !== null) {
-        navigator.geolocation.clearWatch(locationWatchId);
-        locationWatchId = null;
-      }
-      if (hasReceivedUserLocation && error.code !== error.PERMISSION_DENIED) {
-        return;
-      }
-      updateLocationStatus(locationErrorMessage(error));
-      setLocationButtonsActive(false);
-      showLocationPrompt(true);
-    }
-
-    function startLocationTracking(button: HTMLButtonElement) {
-      if (needsSecureLocationOrigin()) {
-        button.disabled = true;
-        if (locationPromptButton) locationPromptButton.disabled = true;
-        updateLocationStatus(secureLocationMessage());
-        setLocationButtonsActive(false);
-        showLocationPrompt(true);
-        return;
-      }
-      if (!navigator.geolocation) {
-        button.disabled = true;
-        button.title = 'Location is unavailable';
-        if (locationPromptButton) locationPromptButton.disabled = true;
-        updateLocationStatus(unavailableLocationMessage());
-        showLocationPrompt(true);
-        return;
-      }
-      updateLocationStatus('Waiting for location permission...');
-      setLocationButtonsActive(true);
-      startMobileHeading();
-      if (locationWatchId !== null) return;
-      locationWatchId = navigator.geolocation.watchPosition(
-        updateUserLocation,
-        handleLocationError,
-        {
-          enableHighAccuracy: true,
-          maximumAge: 0,
-          timeout: 20000
-        }
-      );
-    }
-
-    applyImageryModeRef.current = applyImageryMode;
-    mapView.addLocateControl(startLocationTracking, locateButtons);
-
-    function updateFloatingMapOptionsAnchor() {
-      if (!isMobile) return;
-      const controlStack = mapContainer.querySelector('.maplibregl-ctrl-top-right') as HTMLElement | null;
-      if (!controlStack) return;
-      const controlBounds = controlStack.getBoundingClientRect();
-      document.documentElement.style.setProperty('--map-controls-bottom', `${Math.ceil(controlBounds.bottom + mapControlsBottomOffset)}px`);
-    }
-
-    window.addEventListener('resize', updateFloatingMapOptionsAnchor);
-    window.addEventListener('orientationchange', updateFloatingMapOptionsAnchor);
-
-    locationPromptButton?.addEventListener('click', () => startLocationTracking(locationPromptButton));
-    mapView.onReady(() => {
-      updateFloatingMapOptionsAnchor();
-      showLocationPrompt();
-      applyImageryMode();
+    map.addControl(new maplibregl.ScaleControl({ maxWidth: 90, unit: 'imperial' }), 'bottom-left');
+    const locate = new maplibregl.GeolocateControl({
+      positionOptions: { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 },
+      trackUserLocation: true, showUserLocation: true, showAccuracyCircle: true,
+      fitBoundsOptions: { maxZoom: 17, duration: 500, padding: 65 }
     });
-    mapView.onViewChangeEnd(() => {
-      renderUserHeading();
-      applyImageryMode();
-    });
-    mapView.whenLayerReady(globalImageryLayerId, applyImageryMode);
-
-    visibleProjects.forEach((project) => {
-      const markerElement = document.createElement('button');
-      markerElement.type = 'button';
-      markerElement.className = `project-marker ${statusClass(project.status)}`;
-      markerElement.title = project.name;
-      markerElement.setAttribute('aria-label', project.name);
-      markerElement.addEventListener('click', () => onProjectSelect(project));
-      mapView.addProjectMarker(project, markerElement);
-    });
-
-    return () => {
-      metadataAbortControllerRef.current?.abort();
-      if (locationWatchId !== null && navigator.geolocation) {
-        navigator.geolocation.clearWatch(locationWatchId);
-      }
-      headingListeners.forEach(([eventName, listener]) => window.removeEventListener(eventName, listener));
-      window.removeEventListener('resize', updateFloatingMapOptionsAnchor);
-      window.removeEventListener('orientationchange', updateFloatingMapOptionsAnchor);
-      document.documentElement.style.removeProperty('--map-controls-bottom');
-      map.off('styledata', closeAutomaticAttribution);
-      map.off('sourcedata', closeAutomaticAttribution);
-      map.off('resize', closeAutomaticAttribution);
-      map.remove();
-      mapRef.current = null;
-      mapViewRef.current = null;
-      applyImageryModeRef.current = null;
+    map.addControl(locate, 'top-right');
+    let heading: number | null = null;
+    let compassStarted = false;
+    let lastAccuracy: number | null = null;
+    let headingTimer: ReturnType<typeof setTimeout> | undefined;
+    const renderHeading = () => {
+      const dot = element.querySelector<HTMLElement>('.maplibregl-user-location-dot');
+      if (!dot) return;
+      dot.classList.toggle('has-heading', heading !== null);
+      if (heading !== null) dot.style.setProperty('--heading', `${normalizeDegrees(heading - map.getBearing())}deg`);
     };
-  }, [onImageryBadgeChange, onImageryNoteChange, onProjectSelect, visibleProjects]);
+    const updateHeading = (next: number) => {
+      heading = smoothHeading(heading, next); renderHeading();
+      clearTimeout(headingTimer);
+      headingTimer = setTimeout(() => { heading = null; renderHeading(); }, 5000);
+    };
+    const orientation = (event: DeviceOrientationEvent) => {
+      const angle = screen.orientation?.angle ?? (typeof window.orientation === 'number' ? window.orientation : 0);
+      const next = headingFromReading(event, angle);
+      if (next !== null) updateHeading(next);
+    };
+    const beginCompass = async () => {
+      if (compassStarted || !window.DeviceOrientationEvent) return;
+      compassStarted = true;
+      try {
+        const api = DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<string> };
+        if (api.requestPermission && await api.requestPermission() !== 'granted') { compassStarted = false; return; }
+        if (disposed) return;
+        window.addEventListener('deviceorientationabsolute', orientation);
+        window.addEventListener('deviceorientation', orientation);
+      } catch { compassStarted = false; }
+    };
+    // iOS requires the compass request in the actual button gesture, not in a
+    // later geolocation callback. Only north-referenced readings are accepted.
+    const locateClick = (event: Event) => {
+      if (!(event.target instanceof Element) || !event.target.closest('.maplibregl-ctrl-geolocate')) return;
+      if (event.target.closest('.maplibregl-ctrl-geolocate-active')) {
+        latest.current.onUserLocationChange(null);
+        setLocationStatus(''); heading = null; renderHeading(); clearTimeout(headingTimer);
+        window.removeEventListener('deviceorientationabsolute', orientation);
+        window.removeEventListener('deviceorientation', orientation);
+        compassStarted = false;
+      } else {
+        setLocationStatus(lastAccuracy === null ? 'Finding your location…' : `Your location · ±${Math.round(lastAccuracy)} m`);
+        setLocationWarning(lastAccuracy !== null && lastAccuracy > 200);
+        void beginCompass();
+      }
+    };
+    element.addEventListener('click', locateClick, true);
+    locate.on('geolocate', event => {
+      const coords = (event as unknown as { coords: GeolocationCoordinates }).coords;
+      const accuracy = Number(coords.accuracy);
+      lastAccuracy = Number.isFinite(accuracy) ? accuracy : null;
+      latest.current.onUserLocationChange({ lat: coords.latitude, lng: coords.longitude, accuracy });
+      setLocationStatus(Number.isFinite(accuracy) ? `Your location · ±${Math.round(accuracy)} m` : 'Your location · accuracy unknown');
+      setLocationWarning(!Number.isFinite(accuracy) || accuracy > 200);
+      if (typeof coords.heading === 'number' && Number.isFinite(coords.heading) && (coords.speed ?? 0) > 1) updateHeading(coords.heading);
+      renderHeading();
+    });
+    locate.on('error', event => {
+      const code = (event as unknown as { code: number }).code;
+      if (code === 1) latest.current.onUserLocationChange(null);
+      setLocationWarning(true);
+      setLocationStatus(code === 1 ? 'Location blocked. Allow location in your browser settings.' : code === 3 ? 'Location timed out. Tap locate to retry.' : 'Location unavailable. Tap locate to retry.');
+      heading = null; renderHeading();
+    });
+    map.on('rotate', renderHeading);
 
-  return (
-    <>
-      <div id="map" ref={mapContainerRef} />
-      <div id="locationPrompt" className="location-prompt" aria-live="polite">
-        <button id="locationPromptButton" type="button">Use my location</button>
-        <span id="locationStatus" className="location-status">Enable location for nearby projects and heading.</span>
-      </div>
-    </>
-  );
+    let activeMode = '';
+    let metadataKey = '';
+    let controller: AbortController | null = null;
+    const cache = new Map<string, Badge>();
+    const badge = (dateText: string, sourceText: string) => latest.current.onImageryBadgeChange({ dateText, sourceText });
+    const updateImagery = () => {
+      if (!map.getLayer('esri-world')) return;
+      const choice = latest.current.selectedImageryMode;
+      const bounds = map.getBounds();
+      const local = localAerialImagery.find(layer => map.getZoom() >= layer.minZoom &&
+        bounds.getWest() >= layer.bounds.west && bounds.getEast() <= layer.bounds.east &&
+        bounds.getSouth() >= layer.bounds.south && bounds.getNorth() <= layer.bounds.north);
+      const mode = choice === 'street-map' ? 'street-map' : local?.id || 'esri-world';
+      const modeKey = `${mode}/${choice}`;
+      if (modeKey !== activeMode) {
+        setImageryVisibility(map, mode, choice === 'satellite-streets'); activeMode = modeKey;
+      }
+      if (mode !== 'esri-world') {
+        controller?.abort(); metadataKey = '';
+        if (mode === 'street-map') badge('Street map', 'OpenStreetMap · building heights vary by coverage');
+        else badge(`Imagery: ${local!.dateLabel}`, `${local!.sourceLabel} · ${local!.resolutionLabel || 'resolution not published'}`);
+        return;
+      }
+      const center = map.getCenter();
+      const zoom = Math.round(map.getZoom());
+      const key = `${center.lng.toFixed(3)}/${center.lat.toFixed(3)}/${zoom}`;
+      if (key === metadataKey) return;
+      metadataKey = key; controller?.abort(); controller = new AbortController();
+      const cached = cache.get(key);
+      if (cached) { badge(cached.dateText, cached.sourceText); return; }
+      badge('Satellite', 'Checking imagery date…');
+      const params = new URLSearchParams({ f: 'json', geometry: `${center.lng},${center.lat}`, geometryType: 'esriGeometryPoint', inSR: '4326', spatialRel: 'esriSpatialRelIntersects', outFields: 'SRC_DATE,SRC_DATE2,SRC_DESC', returnGeometry: 'false', where: `MinMapLevel <= ${zoom} AND MaxMapLevel >= ${zoom}`, orderByFields: 'DrawOrder DESC' });
+      fetch(`${imageryMetadataUrl}?${params}`, { signal: controller.signal }).then(async response => {
+        if (!response.ok) throw new Error('metadata unavailable');
+        const data = await response.json();
+        if (disposed || metadataKey !== key) return;
+        const a = data.features?.[0]?.attributes;
+        const raw = String(a?.SRC_DATE || '');
+        const date = a?.SRC_DATE2 ? new Date(a.SRC_DATE2) : /^\d{8}$/.test(raw) ? new Date(`${raw.slice(0, 4)}-${raw.slice(4, 6)}-${raw.slice(6)}T00:00:00Z`) : null;
+        const value = { dateText: date && Number.isFinite(date.getTime()) ? `Imagery: ${date.toLocaleDateString(undefined, { month: 'short', year: 'numeric', timeZone: 'UTC' })}` : 'Imagery date unavailable', sourceText: a?.SRC_DESC || 'Esri World Imagery' };
+        if (cache.size >= 50) cache.delete(cache.keys().next().value!);
+        cache.set(key, value); badge(value.dateText, value.sourceText);
+      }).catch(error => {
+        if (error.name !== 'AbortError' && !disposed && metadataKey === key) { metadataKey = ''; badge('Imagery date unavailable', 'Esri World Imagery'); }
+      });
+    };
+    applyImagery.current = updateImagery;
+    map.on('moveend', updateImagery); // zoomend also fires moveend: do not request twice.
+    map.once('load', () => {
+      map.addSource('projects', { type: 'geojson', data: projectData(latest.current.projects), cluster: true, clusterRadius: 42, clusterMaxZoom: 14 });
+      map.addLayer({ id: 'clusters', type: 'circle', source: 'projects', filter: ['has', 'point_count'], paint: { 'circle-radius': 19, 'circle-color': '#172d36', 'circle-stroke-width': 2, 'circle-stroke-color': '#ffffff' } });
+      map.addLayer({ id: 'cluster-count', type: 'symbol', source: 'projects', filter: ['has', 'point_count'], layout: { 'text-field': ['get', 'point_count_abbreviated'], 'text-font': ['Noto Sans Regular'], 'text-size': 12, 'text-allow-overlap': true }, paint: { 'text-color': '#ffffff' } });
+      map.addLayer({ id: 'project-points', type: 'circle', source: 'projects', filter: ['!', ['has', 'point_count']], paint: {
+        'circle-radius': 8, 'circle-color': ['match', ['get', 'status'], 'proposed', '#4fb4ff', 'approved', '#b879ff', 'recently_completed', '#42c47c', '#ff9b28'], 'circle-stroke-width': 2, 'circle-stroke-color': '#ffffff'
+      } });
+      map.addLayer({ id: 'project-selected', type: 'circle', source: 'projects', filter: ['==', ['get', 'id'], latest.current.selectedProject?.id || ''], paint: { 'circle-radius': 13, 'circle-opacity': 0, 'circle-stroke-width': 3, 'circle-stroke-color': '#172d36' } });
+      map.addLayer({ id: 'project-hit', type: 'circle', source: 'projects', filter: ['!', ['has', 'point_count']], paint: { 'circle-radius': 22, 'circle-opacity': 0 } });
+      map.on('click', async event => {
+        const hits = map.queryRenderedFeatures(event.point, { layers: ['clusters', 'project-hit'] });
+        if (!hits.length) return;
+        // Choose the nearest center where expanded touch targets overlap.
+        hits.sort((a, b) => {
+          const distance = (f: typeof a) => map.project((f.geometry as GeoJSON.Point).coordinates as [number, number]).dist(event.point);
+          return distance(a) - distance(b);
+        });
+        const hit = hits[0];
+        if (hit.properties.cluster_id !== undefined) {
+          try {
+            const source = map.getSource('projects') as maplibregl.GeoJSONSource;
+            const zoom = await source.getClusterExpansionZoom(hit.properties.cluster_id);
+            if (!disposed) map.easeTo({ center: (hit.geometry as GeoJSON.Point).coordinates as [number, number], zoom, duration: 400 });
+          } catch { /* A filter can replace cluster IDs during the worker request. */ }
+        } else {
+          const project = latest.current.projects.find(p => p.id === hit.properties.id);
+          if (project) latest.current.onProjectSelect(project);
+        }
+      });
+      for (const layer of ['clusters', 'project-hit']) {
+        map.on('mouseenter', layer, () => { map.getCanvas().style.cursor = 'pointer'; });
+        map.on('mouseleave', layer, () => { map.getCanvas().style.cursor = ''; });
+      }
+      map.setLayoutProperty('building-3d', 'visibility', latest.current.is3DEnabled ? 'visible' : 'none');
+      updateImagery(); setReady(true);
+      performance.measure('wbb-map-ready', { start: startedAt, end: performance.now() });
+    });
+    map.on('error', event => {
+      console.warn('Map resource unavailable', event.error?.message);
+      if (!map.getSource('projects')) setMapError('Map tiles are taking longer than expected. You can still browse the project list.');
+    });
+    map.on('idle', () => setMapError(''));
+    return () => {
+      disposed = true; controller?.abort(); clearTimeout(headingTimer);
+      element.removeEventListener('click', locateClick, true);
+      window.removeEventListener('deviceorientationabsolute', orientation);
+      window.removeEventListener('deviceorientation', orientation);
+      map.remove(); mapRef.current = null; applyImagery.current = () => {};
+    };
+  }, []);
+
+  useEffect(() => { if (ready) applyImagery.current(); }, [props.selectedImageryMode, ready]);
+  useEffect(() => {
+    if (ready && mapRef.current && last3D.current !== props.is3DEnabled) {
+      set3DMode(mapRef.current, props.is3DEnabled); last3D.current = props.is3DEnabled;
+    }
+  }, [props.is3DEnabled, ready]);
+  useEffect(() => {
+    if (!ready || !mapRef.current) return;
+    (mapRef.current.getSource('projects') as maplibregl.GeoJSONSource).setData(projectData(props.projects));
+  }, [props.projects, ready]);
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!ready || !map) return;
+    map.setFilter('project-selected', ['==', ['get', 'id'], props.selectedProject?.id || '']);
+    if (props.selectedProject && hasCoordinates(props.selectedProject)) centerOnProject(map, [props.selectedProject.lng!, props.selectedProject.lat!], window.innerWidth <= 720);
+  }, [props.selectedProject, ready]);
+  useEffect(() => {
+    const map = mapRef.current;
+    const points = latest.current.projects.filter(hasCoordinates);
+    if (!ready || !map || !props.overviewRequest || !points.length) return;
+    const bounds = new maplibregl.LngLatBounds(); points.forEach(p => bounds.extend([p.lng!, p.lat!]));
+    const camera = map.cameraForBounds(bounds, { padding: { top: 125, bottom: 70, left: 35, right: 75 }, maxZoom: 15 });
+    if (camera) map.easeTo({ ...camera, duration: 500 });
+  }, [props.overviewRequest, ready]);
+
+  return <>
+    <div id="map" ref={container} data-ready={ready} aria-label="Construction project map" />
+    {mapError ? <p className="map-message" role="status">{mapError}</p> : null}
+    {locationStatus ? <div className={`location-readout ${locationWarning ? 'is-warning' : ''}`} role="status">
+      <span>{locationStatus}</span><button type="button" aria-label="Dismiss location message" onClick={() => setLocationStatus('')}>×</button>
+    </div> : null}
+  </>;
 }

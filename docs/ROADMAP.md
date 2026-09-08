@@ -1,10 +1,15 @@
 # Roadmap
 
-Planned milestones, priorities, and future ideas.
+## Now
 
-## Near term
+- Finish the St. Pete project list and keep it current.
+- Add more city and county sources without dumping unchecked pins onto the map.
+- Make the nearby experience useful on an iPhone.
+- Improve local aerial imagery where public county layers are available.
 
-- Keep the base map global so the app can work anywhere before a city has project data.
-- Add city-specific project datasets as scraping/public-record workflows are built.
-- Expand the imagery source registry so each city can declare its best available local aerial imagery years.
-- Add a request flow for users to ask for buildings or cities that are not populated yet.
+## Later
+
+- Add the rest of Tampa Bay, then make it easier to start a new city.
+- Let people report a missing construction site.
+- Add better duplicate detection and address matching.
+- Explore the game-like nearby idea after the map and data are solid.
